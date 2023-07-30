@@ -21,20 +21,26 @@ class NeuralNetwork:
         if layer_index < 0 or layer_index >= len(self.layers) - 1:
             raise ValueError("Invalid layer index")
 
-        input_layer = self.layers[layer_index]
-        output_layer = self.layers[layer_index + 1]
+        begin_layer = self.layers[layer_index]
+        next_layer = self.layers[layer_index + 1]
 
-        num_input_nodes = input_layer.shape
-        num_output_nodes = output_layer.shape
+        begin_layer_nodes_count = begin_layer.shape
+        next_layer_nodes_count = next_layer.shape
 
-        if output_layer.weights_initializer == 'heUniform':
-            weights_matrix = heUniform_(num_input_nodes, num_output_nodes)
+        print(layer_index, begin_layer_nodes_count, next_layer_nodes_count)
+        if next_layer_nodes_count.weights_initializer == 'heUniform':
+            weights_matrix = heUniform_(
+                next_layer_nodes_count, begin_layer_nodes_count)
 
-        elif output_layer.weights_initializer == 'random':
+        elif next_layer_nodes_count.weights_initializer == 'random':
             weights_matrix = np.random.normal(0.0,
-                                              pow(num_input_nodes, -0.5),
-                                              (num_input_nodes, num_output_nodes))
-
+                                              pow(begin_layer_nodes_count, -0.5),
+                                              (next_layer_nodes_count, begin_layer_nodes_count))
+        # if layer_index == 0:
+        #     self.weights[layer_index] = [[0.7, 0.3], [0.4, 0.6]]
+        # # elif layer_index == 1:
+        # #     self.weights[layer_index] = [[0.7, .6, .5], [.4, .3, .2]]
+        # else:
         self.weights[layer_index] = weights_matrix
         print("i:", layer_index, "\n", self.weights[layer_index])
 
@@ -42,13 +48,15 @@ class NeuralNetwork:
         if index < 0 or index >= len(self.layers) - 1:
             raise ValueError("Invalid input or output layer index")
 
-        output_layer = self.layers[index + 1]
-
-        weighted_sum = np.dot(self.data.T, self.weights[index]) if index == 0 else np.dot(
-            self.outputs[index - 1].T, self.weights[index])
-        weighted_sum = np.sum(weighted_sum, axis=0)
-        output = output_layer.activation(weighted_sum)
-        self.outputs[index] = np.array(output).reshape(-1, 1)
+        next_layer = self.layers[index + 1]
+        if index == 0:
+            weighted_sum = np.dot(self.data.T, self.weights[index])
+        else:
+            weighted_sum = np.dot(
+                self.outputs[index - 1].T, self.weights[index].T)
+        output = next_layer.activation(weighted_sum)
+        output = np.array(output).reshape(-1, 1)
+        self.outputs[index] = output
 
     def feedforward(self):
         current_input = self.data
@@ -58,55 +66,41 @@ class NeuralNetwork:
             self.calculate_signal(i)
 
         last_layer_index = len(self.layers) - 1
-        print(last_layer_index, "hi")
-        weighted_sum = np.dot(self.weights[last_layer_index - 1],
-                              self.outputs[last_layer_index - 1])
-        output = self.layers[last_layer_index].activation(weighted_sum)
-        print(last_layer_index)
-        self.outputs[last_layer_index - 1] = output
         return self.outputs[last_layer_index - 1]
 
-    def update_weights(self, index):
+    def backword_propagation(self):
+        # needs to implement
         pass
 
     def train(self, targets_list):
         self.feedforward()
 
         targets = np.array(targets_list, ndmin=2).T
+        num_layers = len(self.layers)
 
-        for layer_index in range(len(self.layers) - 1, 0, -1):
-            if layer_index == len(self.layers) - 1:
-                errors = targets - self.outputs[layer_index]
-            else:
-                errors = np.dot(self.weights[layer_index].T, errors)
-
-            gradients = errors * \
-                self.outputs[layer_index] * (1.0 - self.outputs[layer_index])
-            gradients *= self.lr
-
-            if layer_index > 0:
-                input_data = self.outputs[layer_index - 1]
-            else:
-                input_data = self.data
-            weight_deltas = np.dot(gradients, input_data.T)
-
-            self.weights[layer_index - 1] += weight_deltas
+        output_error = targets - self.outputs[num_layers - 1]
+        output_sigmoid = self.layers[num_layers -
+                                     2].activation(self.outputs[num_layers - 2])
+        output_delta = output_error * \
+            output_sigmoid * (1 - output_sigmoid) * self
+        #     (1.0 - self.outputs[num_layers - 2])
 
 
-input_shape = 3
+input_shape = 2
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
-    DenseLayer(4, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(2, activation='sigmoid', weights_initializer='random'),
     DenseLayer(3, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(1, activation='sigmoid', weights_initializer='random')
+    # DenseLayer(1, activation='sigmoid', weights_initializer='random')
 ]
 
 neural_net = NeuralNetwork(layers)
-input_data = [[1.0], [0.5], [-1.5]]
+input_data = [[0.5], [0.3]]
 neural_net.init_data(input_data)
 output = neural_net.feedforward()
 
 print("Input Data:", input_data)
 print("Output:", output)
 for layer_idx, layer_output in enumerate(neural_net.outputs):
-    print(f"Output of Layer {layer_idx}: {layer_output}")
+    print(
+        f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
