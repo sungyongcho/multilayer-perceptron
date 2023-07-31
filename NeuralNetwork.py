@@ -36,14 +36,12 @@ class NeuralNetwork:
             weights_matrix = np.random.normal(0.0,
                                               pow(begin_layer_nodes_count, -0.5),
                                               (next_layer_nodes_count, begin_layer_nodes_count))
-        # if layer_index == 0:
-        #     self.weights[layer_index] = [[.3, .25], [.4, .35]]
-        # elif layer_index == 1:
-        #     self.weights[layer_index] = [[.45, .4], [.7, .6]]
-        # # elif layer_index == 1:
-        # #     self.weights[layer_index] = [[0.7, .6, .5], [.4, .3, .2]]
-        # else:
-        self.weights[layer_index] = weights_matrix
+        if layer_index == 0:
+            self.weights[layer_index] = [[.3, .4, .5], [.15, .25, .35]]
+        elif layer_index == 1:
+            self.weights[layer_index] = [[.6, .7], [.45, .55], [.11, .22]]
+        # # else:
+        # self.weights[layer_index] = weights_matrix
 
     def calculate_signal(self, index):
         if index < 0 or index >= len(self.layers) - 1:
@@ -51,10 +49,10 @@ class NeuralNetwork:
 
         next_layer = self.layers[index + 1]
         if index == 0:
-            weighted_sum = np.dot(self.data.T, np.array(self.weights[index]).T)
+            weighted_sum = np.dot(self.data.T, np.array(self.weights[index]))
         else:
             weighted_sum = np.dot(
-                np.array(self.outputs[index - 1]).T, np.array(self.weights[index]).T)
+                np.array(self.outputs[index - 1]).T, np.array(self.weights[index]))
         output = next_layer.activation(weighted_sum)
         output = np.array(output).reshape(-1, 1)
         # print(output)
@@ -97,36 +95,45 @@ class NeuralNetwork:
             print("index", i)
 
             if i != num_layers - 2:
-                print("i:", 0)
-                print(self.outputs[i])
-                print(self.errors[i + 1])
-                sigmoid_deriv_before = self.outputs[i +
-                                                    1] * (1 - self.outputs[i + 1])
-                print(sigmoid_deriv_before)
-                delta_before = np.dot(
-                    self.errors[i + 1].T, self.weights[i + 1]) * sigmoid_deriv_before
+                print("test")
+                # print("i:", 0)
+                # print(self.outputs[i])
+                # print(self.errors[i + 1])
+                # sigmoid_deriv_before = self.outputs[i +
+                #                                     1] * (1 - self.outputs[i + 1])
+                # print(sigmoid_deriv_before)
+                # delta_before = np.dot(
+                #     self.errors[i + 1].T, self.weights[i + 1]) * sigmoid_deriv_before
 
-                self.errors[i] = delta_before
-                print("del", delta_before)
-                result_matrix = np.sum(delta_before, axis=0, keepdims=True)
-                print("del2", result_matrix)
-                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
-                print("sigmoid", sigmoid_deriv)
-                print(self.data.T)
-                if i == 0:
-                    delta = np.dot(result_matrix.T, sigmoid_deriv * self.data)
-                else:
-                    delta = result_matrix * sigmoid_deriv * self.outputs[i].T
-                self.weights[i] -= self.lr * delta
+                # self.errors[i] = delta_before
+                # print("del", delta_before)
+                # result_matrix = np.sum(delta_before, axis=0, keepdims=True)
+                # print("del2", result_matrix)
+                # sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
+                # print("sigmoid", sigmoid_deriv)
+                # print(self.data.T)
+                # if i == 0:
+                #     delta = np.dot(result_matrix.T, sigmoid_deriv * self.data)
+                # else:
+                #     delta = result_matrix * sigmoid_deriv * self.outputs[i].T
+                # self.weights[i] -= self.lr * delta
                 # print(result_matrix)
 
                 # delta = error * sigmoid_deriv * self.data
             else:
                 error = -(targets - self.outputs[i])
+                print(error)
                 self.errors[i] = error
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
+                # print(sigmoid_deriv, sigmoid_deriv.shape)
+                # print(self.errors[i], self.errors[i].shape)
+                print("aaa", error * sigmoid_deriv)
+                print("outputs", self.outputs[i])
                 delta = error * sigmoid_deriv * self.outputs[i - 1].T
-                self.weights[i] -= self.lr * delta
+                print(delta.T)
+                print(self.weights[i])
+                # print(self.weights[i])
+                self.weights[i] -= self.lr * delta.T
             print("i:", i, "\n", self.weights[i])
 
         # print(output_sigmoid)
@@ -137,7 +144,7 @@ input_shape = 2
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
     DenseLayer(3, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
+    # DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     DenseLayer(2, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
