@@ -8,6 +8,7 @@ class NeuralNetwork:
         self.layers = layers
         self.weights = [None] * (len(layers) - 1)
         self.outputs = [None] * (len(layers) - 1)
+        self.errors = [None] * (len(layers) - 1)
         self.data = None
         self.lr = None
 
@@ -27,22 +28,22 @@ class NeuralNetwork:
         begin_layer_nodes_count = begin_layer.shape
         next_layer_nodes_count = next_layer.shape
 
-        print(layer_index, begin_layer_nodes_count, next_layer_nodes_count)
-        if next_layer_nodes_count.weights_initializer == 'heUniform':
+        if begin_layer.weights_initializer == 'heUniform':
             weights_matrix = heUniform_(
                 next_layer_nodes_count, begin_layer_nodes_count)
 
-        elif next_layer_nodes_count.weights_initializer == 'random':
+        elif next_layer.weights_initializer == 'random':
             weights_matrix = np.random.normal(0.0,
                                               pow(begin_layer_nodes_count, -0.5),
                                               (next_layer_nodes_count, begin_layer_nodes_count))
-        # if layer_index == 0:
-        #     self.weights[layer_index] = [[0.7, 0.3], [0.4, 0.6]]
-        # # elif layer_index == 1:
-        # #     self.weights[layer_index] = [[0.7, .6, .5], [.4, .3, .2]]
-        # else:
-        self.weights[layer_index] = weights_matrix
-        print("i:", layer_index, "\n", self.weights[layer_index])
+        if layer_index == 0:
+            self.weights[layer_index] = [[.3, .25], [.4, .35]]
+        elif layer_index == 1:
+            self.weights[layer_index] = [[.45, .4], [.7, .6]]
+        # elif layer_index == 1:
+        #     self.weights[layer_index] = [[0.7, .6, .5], [.4, .3, .2]]
+        else:
+            self.weights[layer_index] = weights_matrix
 
     def calculate_signal(self, index):
         if index < 0 or index >= len(self.layers) - 1:
@@ -50,12 +51,13 @@ class NeuralNetwork:
 
         next_layer = self.layers[index + 1]
         if index == 0:
-            weighted_sum = np.dot(self.data.T, self.weights[index])
+            weighted_sum = np.dot(self.data.T, np.array(self.weights[index]).T)
         else:
             weighted_sum = np.dot(
-                self.outputs[index - 1].T, self.weights[index].T)
+                np.array(self.outputs[index - 1]).T, np.array(self.weights[index]).T)
         output = next_layer.activation(weighted_sum)
         output = np.array(output).reshape(-1, 1)
+        # print(output)
         self.outputs[index] = output
 
     def feedforward(self):
@@ -75,32 +77,77 @@ class NeuralNetwork:
     def train(self, targets_list):
         self.feedforward()
 
-        targets = np.array(targets_list, ndmin=2).T
-        num_layers = len(self.layers)
+        targets = np.array(targets_list, ndmin=2)
 
-        output_error = targets - self.outputs[num_layers - 1]
-        output_sigmoid = self.layers[num_layers -
-                                     2].activation(self.outputs[num_layers - 2])
-        output_delta = output_error * \
-            output_sigmoid * (1 - output_sigmoid) * self
-        #     (1.0 - self.outputs[num_layers - 2])
+        num_layers = len(self.layers)
+        num_outputs = len(self.outputs)
+
+        # output_error = -(targets - self.outputs[num_layers - 2])
+
+        # sigmoid_deriv = self.outputs[num_layers -
+        #                              2] * (1 - self.outputs[num_layers - 2])
+
+        # print("outputs", self.outputs[num_layers - 2 - 1].T)
+        # output_delta = output_error * sigmoid_deriv * \
+        #     self.outputs[num_layers - 2 - 1].T
+        # self.weights[num_layers - 2] -= self.lr * output_delta
+        # print(self.weights[num_layers - 2])
+
+        for i in range(num_layers - 2, -1, -1):
+            print(i)
+
+            if i != num_layers - 2:
+                print("i:", 0)
+                print(self.outputs[i])
+                print(self.errors[i + 1])
+                sigmoid_deriv_before = self.outputs[i +
+                                                    1] * (1 - self.outputs[i + 1])
+                print(sigmoid_deriv_before)
+                delta_before = self.errors[i + 1] * \
+                    sigmoid_deriv_before * self.weights[i + 1]
+                result_matrix = np.sum(delta_before, axis=0, keepdims=True)
+                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
+                if (i == 0):
+                    delta = result_matrix * sigmoid_deriv * self.data.T
+                else:
+                    delta = result_matrix * sigmoid_deriv * self.outputs[i].T
+                self.weights[i] -= self.lr * delta
+                print("i:", i, self.weights[i])
+                # print(result_matrix)
+
+                # delta = error * sigmoid_deriv * self.data
+            else:
+                error = -(targets - self.outputs[i])
+                self.errors[i] = error
+                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
+                delta = error * sigmoid_deriv * self.outputs[i - 1].T
+                self.weights[i] -= self.lr * delta
+            # print("i:", i, "\n", self.weights[i])
+
+        # print(output_sigmoid)
+        # print(self.weights[num_layers - 2])
 
 
 input_shape = 2
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
     DenseLayer(2, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(2, activation='sigmoid', weights_initializer='random'),
+    # DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
 ]
 
 neural_net = NeuralNetwork(layers)
-input_data = [[0.5], [0.3]]
+input_data = [[0.1], [0.2]]
 neural_net.init_data(input_data)
-output = neural_net.feedforward()
 
+
+output = neural_net.feedforward()
 print("Input Data:", input_data)
 print("Output:", output)
 for layer_idx, layer_output in enumerate(neural_net.outputs):
     print(
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
+
+neural_net.set_learning_rate(0.5)
+neural_net.train([[.4], [.6]])
