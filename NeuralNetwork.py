@@ -36,14 +36,14 @@ class NeuralNetwork:
             weights_matrix = np.random.normal(0.0,
                                               pow(begin_layer_nodes_count, -0.5),
                                               (next_layer_nodes_count, begin_layer_nodes_count))
-        if layer_index == 0:
-            self.weights[layer_index] = [[.3, .25], [.4, .35]]
-        elif layer_index == 1:
-            self.weights[layer_index] = [[.45, .4], [.7, .6]]
+        # if layer_index == 0:
+        #     self.weights[layer_index] = [[.3, .25], [.4, .35]]
         # elif layer_index == 1:
-        #     self.weights[layer_index] = [[0.7, .6, .5], [.4, .3, .2]]
-        else:
-            self.weights[layer_index] = weights_matrix
+        #     self.weights[layer_index] = [[.45, .4], [.7, .6]]
+        # # elif layer_index == 1:
+        # #     self.weights[layer_index] = [[0.7, .6, .5], [.4, .3, .2]]
+        # else:
+        self.weights[layer_index] = weights_matrix
 
     def calculate_signal(self, index):
         if index < 0 or index >= len(self.layers) - 1:
@@ -94,7 +94,7 @@ class NeuralNetwork:
         # print(self.weights[num_layers - 2])
 
         for i in range(num_layers - 2, -1, -1):
-            print(i)
+            print("index", i)
 
             if i != num_layers - 2:
                 print("i:", 0)
@@ -103,16 +103,21 @@ class NeuralNetwork:
                 sigmoid_deriv_before = self.outputs[i +
                                                     1] * (1 - self.outputs[i + 1])
                 print(sigmoid_deriv_before)
-                delta_before = self.errors[i + 1] * \
-                    sigmoid_deriv_before * self.weights[i + 1]
+                delta_before = np.dot(
+                    self.errors[i + 1].T, self.weights[i + 1]) * sigmoid_deriv_before
+
+                self.errors[i] = delta_before
+                print("del", delta_before)
                 result_matrix = np.sum(delta_before, axis=0, keepdims=True)
+                print("del2", result_matrix)
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
-                if (i == 0):
-                    delta = result_matrix * sigmoid_deriv * self.data.T
+                print("sigmoid", sigmoid_deriv)
+                print(self.data.T)
+                if i == 0:
+                    delta = np.dot(result_matrix.T, sigmoid_deriv * self.data)
                 else:
                     delta = result_matrix * sigmoid_deriv * self.outputs[i].T
                 self.weights[i] -= self.lr * delta
-                print("i:", i, self.weights[i])
                 # print(result_matrix)
 
                 # delta = error * sigmoid_deriv * self.data
@@ -122,7 +127,7 @@ class NeuralNetwork:
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
                 delta = error * sigmoid_deriv * self.outputs[i - 1].T
                 self.weights[i] -= self.lr * delta
-            # print("i:", i, "\n", self.weights[i])
+            print("i:", i, "\n", self.weights[i])
 
         # print(output_sigmoid)
         # print(self.weights[num_layers - 2])
@@ -131,7 +136,8 @@ class NeuralNetwork:
 input_shape = 2
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
-    DenseLayer(2, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     DenseLayer(2, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
