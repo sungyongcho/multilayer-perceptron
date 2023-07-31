@@ -9,7 +9,7 @@ class NeuralNetwork:
         self.weights = [None] * (len(layers) - 1)
         self.outputs = [None] * (len(layers) - 1)
         self.errors = [None] * (len(layers) - 1)
-        self.data = None
+        self.deltas = [None] * (len(layers) - 1)
         self.lr = None
 
     def init_data(self, data):
@@ -30,18 +30,20 @@ class NeuralNetwork:
 
         if begin_layer.weights_initializer == 'heUniform':
             weights_matrix = heUniform_(
-                next_layer_nodes_count, begin_layer_nodes_count)
+                begin_layer_nodes_count, next_layer_nodes_count)
 
         elif next_layer.weights_initializer == 'random':
             weights_matrix = np.random.normal(0.0,
                                               pow(begin_layer_nodes_count, -0.5),
-                                              (next_layer_nodes_count, begin_layer_nodes_count))
+                                              (begin_layer_nodes_count, next_layer_nodes_count))
+        # print(weights_matrix.shape)
+        # print(np.array([[.3, .4, .5], [.15, .25, .35]]).shape)
         if layer_index == 0:
             self.weights[layer_index] = [[.3, .4, .5], [.15, .25, .35]]
         elif layer_index == 1:
             self.weights[layer_index] = [[.6, .7], [.45, .55], [.11, .22]]
-        # # else:
-        # self.weights[layer_index] = weights_matrix
+        else:
+            self.weights[layer_index] = weights_matrix
 
     def calculate_signal(self, index):
         if index < 0 or index >= len(self.layers) - 1:
@@ -90,33 +92,34 @@ class NeuralNetwork:
         #     self.outputs[num_layers - 2 - 1].T
         # self.weights[num_layers - 2] -= self.lr * output_delta
         # print(self.weights[num_layers - 2])
-
+        weights_before = self.weights.copy()
         for i in range(num_layers - 2, -1, -1):
-            print("index", i)
 
             if i != num_layers - 2:
                 print("test")
                 # print("i:", 0)
                 # print(self.outputs[i])
-                # print(self.errors[i + 1])
-                # sigmoid_deriv_before = self.outputs[i +
-                #                                     1] * (1 - self.outputs[i + 1])
-                # print(sigmoid_deriv_before)
-                # delta_before = np.dot(
-                #     self.errors[i + 1].T, self.weights[i + 1]) * sigmoid_deriv_before
-
+                # print(self.deltas[i + 1])
+                # print(weights_before[i + 1])
+                # print(self.deltas[i + 1] * np.array(weights_before[i + 1]).T)
+                deriv_errors = np.sum(
+                    (self.deltas[i + 1].T * np.array(weights_before[i + 1]).T), axis=0, keepdims=True)
+                # print(deriv_errors)
+                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
+                # print(deriv_errors * sigmoid_deriv.T * self.data)
                 # self.errors[i] = delta_before
                 # print("del", delta_before)
                 # result_matrix = np.sum(delta_before, axis=0, keepdims=True)
                 # print("del2", result_matrix)
-                # sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
                 # print("sigmoid", sigmoid_deriv)
                 # print(self.data.T)
-                # if i == 0:
-                #     delta = np.dot(result_matrix.T, sigmoid_deriv * self.data)
-                # else:
-                #     delta = result_matrix * sigmoid_deriv * self.outputs[i].T
-                # self.weights[i] -= self.lr * delta
+                self.deltas[i] = deriv_errors.T * sigmoid_deriv.T
+                if i == 0:
+                    self.weights[i] -= self.lr * (self.deltas[i] * self.data)
+                    # delta = deriv_errors * sigmoid_deriv.T * self.data
+                else:
+                    self.weights[i] -= self.lr * \
+                        (self.deltas[i] * self.output[i - 1])
                 # print(result_matrix)
 
                 # delta = error * sigmoid_deriv * self.data
@@ -127,14 +130,12 @@ class NeuralNetwork:
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
                 # print(sigmoid_deriv, sigmoid_deriv.shape)
                 # print(self.errors[i], self.errors[i].shape)
-                print("aaa", error * sigmoid_deriv)
-                print("outputs", self.outputs[i])
-                delta = error * sigmoid_deriv * self.outputs[i - 1].T
-                print(delta.T)
+                self.deltas[i] = error * sigmoid_deriv
+                # print(delta.T)
                 print(self.weights[i])
-                # print(self.weights[i])
-                self.weights[i] -= self.lr * delta.T
-            print("i:", i, "\n", self.weights[i])
+                self.weights[i] -= self.lr * \
+                    (self.deltas[i] * self.outputs[i - 1].T)
+            # print("i:", i, "\n", self.weights[i])
 
         # print(output_sigmoid)
         # print(self.weights[num_layers - 2])
@@ -162,5 +163,5 @@ for layer_idx, layer_output in enumerate(neural_net.outputs):
     print(
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
 
-neural_net.set_learning_rate(0.5)
-neural_net.train([[.4], [.6]])
+# neural_net.set_learning_rate(0.5)
+# neural_net.train([[.4], [.6]])
