@@ -80,24 +80,12 @@ class NeuralNetwork:
         targets = np.array(targets_list, ndmin=2)
 
         num_layers = len(self.layers)
-        num_outputs = len(self.outputs)
 
-        # output_error = -(targets - self.outputs[num_layers - 2])
-
-        # sigmoid_deriv = self.outputs[num_layers -
-        #                              2] * (1 - self.outputs[num_layers - 2])
-
-        # print("outputs", self.outputs[num_layers - 2 - 1].T)
-        # output_delta = output_error * sigmoid_deriv * \
-        #     self.outputs[num_layers - 2 - 1].T
-        # self.weights[num_layers - 2] -= self.lr * output_delta
-        # print(self.weights[num_layers - 2])
         weights_before = self.weights.copy()
         for i in range(num_layers - 2, -1, -1):
-
+            print("i:", i, "----------------")
             if i != num_layers - 2:
                 print("test")
-                # print("i:", 0)
                 # print(self.outputs[i])
                 # print(self.deltas[i + 1])
                 # print(weights_before[i + 1])
@@ -125,20 +113,12 @@ class NeuralNetwork:
                 # delta = error * sigmoid_deriv * self.data
             else:
                 error = -(targets - self.outputs[i])
-                print(error)
                 self.errors[i] = error
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
-                # print(sigmoid_deriv, sigmoid_deriv.shape)
-                # print(self.errors[i], self.errors[i].shape)
                 self.deltas[i] = error * sigmoid_deriv
-                # print(delta.T)
-                print(self.weights[i])
                 self.weights[i] -= self.lr * \
-                    (self.deltas[i] * self.outputs[i - 1].T)
-            # print("i:", i, "\n", self.weights[i])
-
-        # print(output_sigmoid)
-        # print(self.weights[num_layers - 2])
+                    (self.deltas[i] * self.outputs[i - 1].T).T
+            print("i:", i, "----------------")
 
 
 input_shape = 2
@@ -163,5 +143,5 @@ for layer_idx, layer_output in enumerate(neural_net.outputs):
     print(
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
 
-# neural_net.set_learning_rate(0.5)
-# neural_net.train([[.4], [.6]])
+neural_net.set_learning_rate(0.5)
+neural_net.train([[.4], [.6]])
