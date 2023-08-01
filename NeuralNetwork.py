@@ -97,15 +97,17 @@ class NeuralNetwork:
                 error = np.dot(next_layer_delta.T, next_layer_weights.T)
                 # needs to change to activation_deriv
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
-                self.deltas[i] = error * sigmoid_deriv
+                self.deltas[i] = error * self.layers[i +
+                                                     1].activation_deriv(self.outputs[i])
             else:
                 # Calculate the error and deltas for the output layer
                 output_layer = self.layers[i]
                 error = -(targets - self.outputs[i])
                 # needs to change to activation_deriv
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
-                self.deltas[i] = error * sigmoid_deriv
 
+            self.deltas[i] = error * self.layers[i +
+                                                 1].activation_deriv(self.outputs[i])
             self.weights[i] -= self.lr * \
                 np.dot(self.outputs[i].T, self.deltas[i])
 
@@ -152,7 +154,7 @@ class NeuralNetwork:
             accuracy = self.calculate_accuracy(
                 targets, self.outputs[len(self.layers) - 2])
             accuracy_history.append(accuracy)
-            print(f"Epoch {epoch + 1}, Loss: {loss}")
+            print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
 
         self.plot_graphs(loss_history, accuracy_history)
 
