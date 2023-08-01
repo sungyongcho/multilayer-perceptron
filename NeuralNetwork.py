@@ -1,3 +1,4 @@
+import pandas as pd
 from DenseLayer import DenseLayer
 import numpy as np
 from utils import heUniform_
@@ -8,7 +9,6 @@ class NeuralNetwork:
         self.layers = layers
         self.weights = [None] * (len(layers) - 1)
         self.outputs = [None] * (len(layers) - 1)
-        self.errors = [None] * (len(layers) - 1)
         self.deltas = [None] * (len(layers) - 1)
         self.lr = None
 
@@ -36,10 +36,13 @@ class NeuralNetwork:
             weights_matrix = np.random.normal(0.0,
                                               pow(begin_layer_nodes_count, -0.5),
                                               (begin_layer_nodes_count, next_layer_nodes_count))
+
+        # ============== let's not delete ====================
         # if layer_index == 0:
         #     self.weights[layer_index] = [[.3, .4, .5], [.15, .25, .35]]
         # elif layer_index == 1:
         #     self.weights[layer_index] = [[.6, .7], [.45, .55], [.11, .22]]
+        # ============== let's not delete ====================
         # else:
         self.weights[layer_index] = weights_matrix
 
@@ -70,14 +73,12 @@ class NeuralNetwork:
         num_layers = len(self.layers)
 
         for i in range(num_layers - 2, -1, -1):
-            # print("i:", i, "----------------")
             if i != num_layers - 2:
                 # Calculate the error and deltas for the hidden layers
                 next_layer = self.layers[i + 1]
                 next_layer_weights = self.weights[i + 1]
                 next_layer_delta = self.deltas[i + 1]
                 error = np.dot(next_layer_delta.T, next_layer_weights.T)
-                self.errors[i] = error
                 # needs to change to activation_deriv
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
                 self.deltas[i] = error * sigmoid_deriv
@@ -85,14 +86,12 @@ class NeuralNetwork:
                 # Calculate the error and deltas for the output layer
                 output_layer = self.layers[i]
                 error = -(targets - self.outputs[i])
-                self.errors[i] = error
                 # needs to change to activation_deriv
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
                 self.deltas[i] = error * sigmoid_deriv
 
             self.weights[i] -= self.lr * \
                 np.dot(self.outputs[i].T, self.deltas[i])
-            # print(self.weights[i])
 
     def train(self, targets_list, epoch_num):
         targets = np.array(targets_list, ndmin=2)
@@ -112,9 +111,9 @@ class NeuralNetwork:
 input_shape = 2
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
-    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(32, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(32, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(32, activation='sigmoid', weights_initializer='random'),
     DenseLayer(2, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
 ]
