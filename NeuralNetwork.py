@@ -36,14 +36,12 @@ class NeuralNetwork:
             weights_matrix = np.random.normal(0.0,
                                               pow(begin_layer_nodes_count, -0.5),
                                               (begin_layer_nodes_count, next_layer_nodes_count))
-        # print(weights_matrix.shape)
-        # print(np.array([[.3, .4, .5], [.15, .25, .35]]).shape)
-        if layer_index == 0:
-            self.weights[layer_index] = [[.3, .4, .5], [.15, .25, .35]]
-        elif layer_index == 1:
-            self.weights[layer_index] = [[.6, .7], [.45, .55], [.11, .22]]
-        else:
-            self.weights[layer_index] = weights_matrix
+        # if layer_index == 0:
+        #     self.weights[layer_index] = [[.3, .4, .5], [.15, .25, .35]]
+        # elif layer_index == 1:
+        #     self.weights[layer_index] = [[.6, .7], [.45, .55], [.11, .22]]
+        # else:
+        self.weights[layer_index] = weights_matrix
 
     def calculate_signal(self, index):
         if index < 0 or index >= len(self.layers) - 1:
@@ -57,12 +55,9 @@ class NeuralNetwork:
                 np.array(self.outputs[index - 1]).T, np.array(self.weights[index]))
         output = next_layer.activation(weighted_sum)
         output = np.array(output).reshape(-1, 1)
-        # print(output)
         self.outputs[index] = output
 
     def feedforward(self):
-        current_input = self.data
-
         for i in range(len(self.layers) - 1):  # Loop through hidden layers
             self.set_weights(i)
             self.calculate_signal(i)
@@ -73,6 +68,13 @@ class NeuralNetwork:
     def backword_propagation(self):
         # needs to implement
         pass
+
+    # def train(self, targets_list):
+    #     self.feedforward()
+
+    #     targets = np.array(targets_list, ndmin=2)
+
+    #     num_layers = len(self.layers)
 
     def train(self, targets_list):
         self.feedforward()
@@ -125,7 +127,7 @@ input_shape = 2
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
     DenseLayer(3, activation='sigmoid', weights_initializer='random'),
-    # DenseLayer(3, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     DenseLayer(2, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
