@@ -10,6 +10,7 @@ class NeuralNetwork:
         self.weights = [None] * (len(layers) - 1)
         self.outputs = [None] * (len(layers) - 1)
         self.deltas = [None] * (len(layers) - 1)
+        self.biases = [None] * (len(layers) - 1)
         self.lr = None
 
     def init_data(self, data):
@@ -46,6 +47,16 @@ class NeuralNetwork:
         # else:
         self.weights[layer_index] = weights_matrix
 
+    def init_biases(self, layer_index):
+        if layer_index < 0 or layer_index >= len(self.layers) - 1:
+            raise ValueError("Invalid layer index")
+
+        next_layer = self.layers[layer_index + 1]
+        next_layer_nodes_count = next_layer.shape
+
+        biases_vector = np.zeros(next_layer_nodes_count)
+        self.biases[layer_index] = biases_vector
+
     def calculate_signal(self, index):
         if index < 0 or index >= len(self.layers) - 1:
             raise ValueError("Invalid input or output layer index")
@@ -56,6 +67,9 @@ class NeuralNetwork:
         else:
             weighted_sum = np.dot(
                 np.array(self.outputs[index - 1]).T, np.array(self.weights[index]))
+
+        weighted_sum += self.biases[index]
+
         output = next_layer.activation(weighted_sum)
         output = np.array(output).reshape(-1, 1)
         self.outputs[index] = output
@@ -64,6 +78,7 @@ class NeuralNetwork:
         for i in range(len(self.layers) - 1):  # Loop through hidden layers
             if self.weights[i] is None:
                 self.init_weights(i)
+                self.init_biases(i)
             self.calculate_signal(i)
 
         last_layer_index = len(self.layers) - 1
@@ -92,6 +107,8 @@ class NeuralNetwork:
 
             self.weights[i] -= self.lr * \
                 np.dot(self.outputs[i].T, self.deltas[i])
+
+            self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0)
 
     def train(self, targets_list, epoch_num):
         targets = np.array(targets_list, ndmin=2)
