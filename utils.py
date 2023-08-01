@@ -152,3 +152,10 @@ def r2score_(y, y_hat):
     ssr = np.sum(r2score_elem_ssr(y, y_hat))
     sst = np.sum(r2score_elem_sst(y))
     return 1 - (ssr / sst)
+
+
+def binary_crossentropy(target, output):
+    epsilon = 1e-9
+    output = np.clip(output, epsilon, 1 - epsilon)
+    loss = -(target * np.log(output) + (1 - target) * np.log(1 - output))
+    return np.mean(loss)

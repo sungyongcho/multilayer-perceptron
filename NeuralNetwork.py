@@ -111,10 +111,36 @@ class NeuralNetwork:
 
             self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0)
 
+    def calculate_accuracy(self, target, output):
+        predictions = output > 0.5
+        target = target > 0.5
+        return np.mean(predictions == target)
+
+    def plot_graphs(self, loss_history, accuracy_history):
+        fig = plt.figure(figsize=(10, 5))
+        # Plot the loss history (first subplot)
+        ax1 = fig.add_subplot(1, 2, 1)  # 1 row, 2 columns, first plot
+        ax1.plot(loss_history, label='training loss')
+        ax1.set_xlabel('epoches')
+        ax1.set_ylabel('loss')
+        ax1.grid(True)
+        ax1.legend()
+
+        ax2 = fig.add_subplot(1, 2, 2)  # 1 row, 2 columns, second plot
+        ax2.plot(accuracy_history, label='training acc')
+        ax2.set_xlabel('Epoch')
+        ax2.set_ylabel('Accuracy')
+        ax2.set_title('Learning Curves')
+        ax2.grid(True)
+        ax2.legend()
+
+        plt.show()
+
     def train(self, targets_list, epoch_num):
         targets = np.array(targets_list, ndmin=2)
 
         loss_history = []
+        accuracy_history = []
 
         for epoch in range(epoch_num):
             self.feedforward()
@@ -123,16 +149,13 @@ class NeuralNetwork:
             loss = 0.5 * \
                 np.mean((targets - self.outputs[len(self.layers) - 2]) ** 2)
             loss_history.append(loss)
+            accuracy = self.calculate_accuracy(
+                targets, self.outputs[len(self.layers) - 2])
+            accuracy_history.append(accuracy)
             print(f"Epoch {epoch + 1}, Loss: {loss}")
-        # Plot the loss history
-        plt.plot(loss_history, label='training loss')
-        plt.xlabel('epoches')
-        plt.ylabel('loss')
-        plt.grid(True)
-        # plt.title('Loss Over Epochs')
-        plt.legend()
-        plt.show()
-        # Return the final trained weights
+
+        self.plot_graphs(loss_history, accuracy_history)
+
         return self.weights
 
 
