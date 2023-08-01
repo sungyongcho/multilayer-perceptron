@@ -1,6 +1,7 @@
 import pandas as pd
 from DenseLayer import DenseLayer
 import numpy as np
+from matplotlib import pyplot as plt
 from utils import heUniform_
 
 
@@ -113,14 +114,24 @@ class NeuralNetwork:
     def train(self, targets_list, epoch_num):
         targets = np.array(targets_list, ndmin=2)
 
+        loss_history = []
+
         for epoch in range(epoch_num):
             self.feedforward()
             self.backpropagation(targets)
 
             loss = 0.5 * \
                 np.mean((targets - self.outputs[len(self.layers) - 2]) ** 2)
+            loss_history.append(loss)
             print(f"Epoch {epoch + 1}, Loss: {loss}")
-
+        # Plot the loss history
+        plt.plot(loss_history, label='training loss')
+        plt.xlabel('epoches')
+        plt.ylabel('loss')
+        plt.grid(True)
+        # plt.title('Loss Over Epochs')
+        plt.legend()
+        plt.show()
         # Return the final trained weights
         return self.weights
 
@@ -148,4 +159,6 @@ for layer_idx, layer_output in enumerate(neural_net.outputs):
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
 
 neural_net.set_learning_rate(0.5)
-neural_net.train([[.4], [.6]], 10)
+neural_net.train([[.4], [.6]], 70)
+output = neural_net.feedforward()
+print("Updated Output:", output)
