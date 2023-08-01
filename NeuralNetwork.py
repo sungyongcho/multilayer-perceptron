@@ -18,7 +18,7 @@ class NeuralNetwork:
     def set_learning_rate(self, lr):
         self.lr = lr
 
-    def set_weights(self, layer_index):
+    def init_weights(self, layer_index):
         if layer_index < 0 or layer_index >= len(self.layers) - 1:
             raise ValueError("Invalid layer index")
 
@@ -59,68 +59,56 @@ class NeuralNetwork:
 
     def feedforward(self):
         for i in range(len(self.layers) - 1):  # Loop through hidden layers
-            self.set_weights(i)
+            if self.weights[i] is None:
+                self.init_weights(i)
             self.calculate_signal(i)
 
         last_layer_index = len(self.layers) - 1
         return self.outputs[last_layer_index - 1]
 
-    def backword_propagation(self):
-        # needs to implement
-        pass
-
-    # def train(self, targets_list):
-    #     self.feedforward()
-
-    #     targets = np.array(targets_list, ndmin=2)
-
-    #     num_layers = len(self.layers)
-
-    def train(self, targets_list):
-        self.feedforward()
-
-        targets = np.array(targets_list, ndmin=2)
-
+    def backpropagation(self, targets):
         num_layers = len(self.layers)
 
-        weights_before = self.weights.copy()
         for i in range(num_layers - 2, -1, -1):
-            print("i:", i, "----------------")
+            # print("i:", i, "----------------")
             if i != num_layers - 2:
-                print("test")
-                # print(self.outputs[i])
-                # print(self.deltas[i + 1])
-                # print(weights_before[i + 1])
-                # print(self.deltas[i + 1] * np.array(weights_before[i + 1]).T)
-                deriv_errors = np.sum(
-                    (self.deltas[i + 1].T * np.array(weights_before[i + 1]).T), axis=0, keepdims=True)
-                # print(deriv_errors)
-                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
-                # print(deriv_errors * sigmoid_deriv.T * self.data)
-                # self.errors[i] = delta_before
-                # print("del", delta_before)
-                # result_matrix = np.sum(delta_before, axis=0, keepdims=True)
-                # print("del2", result_matrix)
-                # print("sigmoid", sigmoid_deriv)
-                # print(self.data.T)
-                self.deltas[i] = deriv_errors.T * sigmoid_deriv.T
-                if i == 0:
-                    self.weights[i] -= self.lr * (self.deltas[i] * self.data)
-                    # delta = deriv_errors * sigmoid_deriv.T * self.data
-                else:
-                    self.weights[i] -= self.lr * \
-                        (self.deltas[i] * self.output[i - 1])
-                # print(result_matrix)
-
-                # delta = error * sigmoid_deriv * self.data
-            else:
-                error = -(targets - self.outputs[i])
+                # Calculate the error and deltas for the hidden layers
+                next_layer = self.layers[i + 1]
+                next_layer_weights = self.weights[i + 1]
+                next_layer_delta = self.deltas[i + 1]
+                error = np.dot(next_layer_delta.T, next_layer_weights.T)
                 self.errors[i] = error
+                # needs to change to activation_deriv
                 sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
                 self.deltas[i] = error * sigmoid_deriv
-                self.weights[i] -= self.lr * \
-                    (self.deltas[i] * self.outputs[i - 1].T).T
-            print("i:", i, "----------------")
+            else:
+                # Calculate the error and deltas for the output layer
+                output_layer = self.layers[i]
+                error = -(targets - self.outputs[i])
+                self.errors[i] = error
+                # needs to change to activation_deriv
+                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
+                self.deltas[i] = error * sigmoid_deriv
+
+            self.weights[i] -= self.lr * \
+                np.dot(self.outputs[i].T, self.deltas[i])
+            # print(self.weights[i])
+
+    def train(self, targets_list, epoch_num):
+        targets = np.array(targets_list, ndmin=2)
+
+        for epoch in range(epoch_num):
+            self.feedforward()
+            self.backpropagation(targets)
+            # print(self.weights)
+
+            # Calculate the loss for this epoch
+            loss = 0.5 * \
+                np.mean((targets - self.outputs[len(self.layers) - 2]) ** 2)
+            print(f"Epoch {epoch + 1}, Loss: {loss}")
+
+        # Return the final trained weights
+        return self.weights
 
 
 input_shape = 2
@@ -146,4 +134,4 @@ for layer_idx, layer_output in enumerate(neural_net.outputs):
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
 
 neural_net.set_learning_rate(0.5)
-neural_net.train([[.4], [.6]])
+neural_net.train([[.4], [.6]], 10)
