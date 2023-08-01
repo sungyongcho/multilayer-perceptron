@@ -100,9 +100,7 @@ class NeuralNetwork:
         for epoch in range(epoch_num):
             self.feedforward()
             self.backpropagation(targets)
-            # print(self.weights)
 
-            # Calculate the loss for this epoch
             loss = 0.5 * \
                 np.mean((targets - self.outputs[len(self.layers) - 2]) ** 2)
             print(f"Epoch {epoch + 1}, Loss: {loss}")
@@ -116,8 +114,8 @@ layers = [
     DenseLayer(input_shape, activation='sigmoid'),
     DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     DenseLayer(3, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     DenseLayer(2, activation='sigmoid', weights_initializer='random'),
-    # DenseLayer(3, activation='sigmoid', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
 ]
 

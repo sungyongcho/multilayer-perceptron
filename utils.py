@@ -50,3 +50,105 @@ def heUniform_(num_input_nodes, num_output_nodes):
     weights = np.random.uniform(-limit, limit,
                                 size=(num_input_nodes, num_output_nodes))
     return weights
+
+
+def mse_elem(y, y_hat):
+    a = y_hat - y
+    return (a ** 2)
+
+
+def rmse_elem(y, y_hat):
+    a = y_hat - y
+    return (a ** 2)
+
+
+def mae_elem(y, y_hat):
+    a = y_hat - y
+    return abs(a)
+
+
+def r2score_elem_ssr(y, y_hat):
+    a = y - y_hat
+    return (a ** 2)
+
+
+def r2score_elem_sst(y):
+    a = y - np.mean(y)
+    return (a ** 2)
+
+
+def mse_(y, y_hat):
+    """
+    Description:
+    Calculate the MSE between the predicted output and the real output.
+    Args:
+    y: has to be a numpy.array, a vector of dimension m * 1.
+    y_hat: has to be a numpy.array, a vector of dimension m * 1.
+    Returns:
+    mse: has to be a float.
+    None if there is a matching dimension problem.
+    Raises:
+    This function should not raise any Exceptions.
+    """
+    if len(y) != len(y_hat):
+        return None
+    a = mse_elem(y, y_hat)
+    return np.sum(a)/len(a)
+
+
+def rmse_(y, y_hat):
+    """
+    Description:
+    Calculate the RMSE between the predicted output and the real output.
+    Args:
+    y: has to be a numpy.array, a vector of dimension m * 1.
+    y_hat: has to be a numpy.array, a vector of dimension m * 1.
+    Returns:
+    rmse: has to be a float.
+    None if there is a matching dimension problem.
+    Raises:
+    This function should not raise any Exceptions.
+    """
+    if len(y) != len(y_hat):
+        return None
+    a = rmse_elem(y, y_hat)
+    return (np.sum(a)/len(a)) ** .5
+
+
+def mae_(y, y_hat):
+    """
+    Description:
+    Calculate the MAE between the predicted output and the real output.
+    Args:
+    y: has to be a numpy.array, a vector of dimension m * 1.
+    y_hat: has to be a numpy.array, a vector of dimension m * 1.
+    Returns:
+    mae: has to be a float.
+    None if there is a matching dimension problem.
+    Raises:
+    This function should not raise any Exceptions.
+    """
+    if len(y) != len(y_hat):
+        return None
+    a = mae_elem(y, y_hat)
+    return (np.sum(a)/len(a))
+
+
+def r2score_(y, y_hat):
+    """
+    Description:
+    Calculate the R2score between the predicted output and the output.
+    Args:
+    y: has to be a numpy.array, a vector of dimension m * 1.
+    y_hat: has to be a numpy.array, a vector of dimension m * 1.
+    Returns:
+    r2score: has to be a float.
+    None if there is a matching dimension problem.
+    Raises:
+    This function should not raise any Exceptions.
+    """
+    if len(y) != len(y_hat):
+        return None
+    ssr = np.sum(r2score_elem_ssr(y, y_hat))
+    sst = np.sum(r2score_elem_sst(y))
+    return 1 - (ssr / sst)
