@@ -18,21 +18,12 @@ def sigmoid_(x):
     return (1 / (1 + math.e ** (-x)))
 
 
-def softmax_(x):
-    # the shape needs to be changed
-    x = x.reshape(-1, 1)
-    """
-    Compute the softmax of a vector.
-    Args:
-    x: has to be a numpy.ndarray of shape (m, 1).
-    Returns:
-    The softmax values as a numpy.ndarray of shape (m, 1).
-    None if x is an empty numpy.ndarray.
-    Raises:
-    This function should not raise any Exception.
-    """
-    exp_x = np.exp(x - np.max(x, axis=0, keepdims=True))
-    return exp_x / np.sum(exp_x, axis=0, keepdims=True)
+def softmax_(X):
+    X = np.array(X)
+    X = X - np.max(X, axis=1, keepdims=True)  # Normalize values
+    exp_x = np.exp(X)
+    result = exp_x / np.sum(exp_x, axis=1, keepdims=True)
+    return result.T
 
 
 def heUniform_(num_input_nodes, num_output_nodes):

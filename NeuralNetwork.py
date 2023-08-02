@@ -15,9 +15,9 @@ class NeuralNetwork:
         self.lr = None
 
     def init_data(self, data):
-        self.data = np.array(data)
-        self.data = self.data.reshape(self.data.shape[0], -1)[0]
-        self.data = self.data[None, :].reshape(-1, 1)
+        self.data = np.array(data).T
+        # self.data = self.data.reshape(self.data.shape[0], -1)
+        # self.data = self.data[None, :].reshape(-1, 1)
         print(self.data)
         # print(self.data.tolist())
 
@@ -71,11 +71,12 @@ class NeuralNetwork:
             weighted_sum = np.dot(self.data.T, np.array(self.weights[index]))
         else:
             weighted_sum = np.dot(
-                np.array(self.outputs[index - 1]).T, np.array(self.weights[index]))
+                np.array(self.outputs[index - 1]), np.array(self.weights[index]))
 
         weighted_sum += self.biases[index]
         output = next_layer.activation(weighted_sum)
-        output = np.array(output).reshape(-1, 1)
+        # print(output.shape)
+        # output = np.array(output).reshape(-1, 1)
         self.outputs[index] = output
 
     def feedforward(self):
@@ -94,7 +95,7 @@ class NeuralNetwork:
         for i in range(num_layers - 2, -1, -1):
             layer_input = self.outputs[i - 1] if i > 0 else self.data
             # Update this line to reshape layer_input
-            layer_input = layer_input.reshape(len(layer_input), 1).T
+            # layer_input = layer_input.reshape(len(layer_input), 1).T
 
             if i != num_layers - 2:
                 # Calculate the error and deltas for the hidden layers
@@ -105,6 +106,7 @@ class NeuralNetwork:
             else:
                 # Calculate the error and deltas for the output layer
                 output_layer = self.layers[i]
+                print("aa", targets)
                 error = -(targets - self.outputs[i])
 
             self.deltas[i] = error * self.layers[i +
@@ -140,7 +142,7 @@ class NeuralNetwork:
         plt.show()
 
     def train(self, targets_list, epoch_num):
-        targets = np.array(targets_list, ndmin=2)
+        # targets = np.array(targets_list, ndmin=2)
 
         loss_history = []
         accuracy_history = []
@@ -148,15 +150,15 @@ class NeuralNetwork:
         # print(targets)
         for epoch in range(epoch_num):
             self.feedforward()
-            self.backpropagation(targets)
+            self.backpropagation(targets_list)
 
             # Calculate the binary cross-entropy loss
             loss = binary_crossentropy(
-                targets, self.outputs[len(self.layers) - 2])
+                targets_list, self.outputs[len(self.layers) - 2])
             loss_history.append(loss)
 
             accuracy = self.calculate_accuracy(
-                targets, self.outputs[len(self.layers) - 2])
+                targets_list, self.outputs[len(self.layers) - 2])
             accuracy_history.append(accuracy)
 
             print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
@@ -196,10 +198,10 @@ output = neural_net.feedforward()
 print("Output:", output)
 for layer_idx, layer_output in enumerate(neural_net.outputs):
     print(
-        f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
+        f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
 
 # neural_net.set_learning_rate(0.5)
-# print(y_train_binary[0])
-# neural_net.train(y_train_binary[0], 70)
+# # print(y_train_binary.T)
+# neural_net.train(y_train_binary.T, 70)
 # output = neural_net.feedforward()
 # print("Updated Output:", output)
