@@ -156,11 +156,11 @@ def r2score_(y, y_hat):
     return 1 - (ssr / sst)
 
 
-def binary_crossentropy(target, output):
-    epsilon = 1e-9
-    output = np.clip(output, epsilon, 1 - epsilon)
-    loss = -(target * np.log(output) + (1 - target) * np.log(1 - output))
-    return np.mean(loss)
+def binary_crossentropy(targets, outputs):
+    N = targets.shape[0]  # Number of sasmples
+    # p = outputs[len(self.layers) - 2]  # Predictions
+    return -1/N * np.sum(targets * np.log(outputs) +
+                         (1 - targets) * np.log(1 - outputs))
 
 
 def convert_binary(y):

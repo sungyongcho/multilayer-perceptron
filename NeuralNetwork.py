@@ -2,7 +2,7 @@ import pandas as pd
 from DenseLayer import DenseLayer
 import numpy as np
 from matplotlib import pyplot as plt
-from utils import convert_binary, heUniform_
+from utils import binary_crossentropy, convert_binary, heUniform_
 
 
 class NeuralNetwork:
@@ -143,12 +143,15 @@ class NeuralNetwork:
             self.feedforward()
             self.backpropagation(targets)
 
-            loss = 0.5 * \
-                np.mean((targets - self.outputs[len(self.layers) - 2]) ** 2)
+            # Calculate the binary cross-entropy loss
+            loss = binary_crossentropy(
+                targets, self.outputs[len(self.layers) - 2])
             loss_history.append(loss)
+
             accuracy = self.calculate_accuracy(
                 targets, self.outputs[len(self.layers) - 2])
             accuracy_history.append(accuracy)
+
             print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
 
         self.plot_graphs(loss_history, accuracy_history)
@@ -179,7 +182,6 @@ layers = [
 ]
 
 neural_net = NeuralNetwork(layers)
-input_data = [[0.1], [0.2]]
 neural_net.init_data(x_train)
 
 
