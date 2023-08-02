@@ -22,4 +22,4 @@ class DenseLayer:
             self.activation_deriv = lambda x: x * (1 - x)
         elif self.activation == 'softmax':
             self.activation = lambda x: softmax_(x)
-            self.activation_deriv = lambda x: softmax_derivative(x)
+            self.activation_deriv = lambda x: np.multiply(x, (1 - x))

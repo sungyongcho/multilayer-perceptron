@@ -2,7 +2,7 @@ import pandas as pd
 from DenseLayer import DenseLayer
 import numpy as np
 from matplotlib import pyplot as plt
-from utils import heUniform_
+from utils import convert_binary, heUniform_
 
 
 class NeuralNetwork:
@@ -16,6 +16,7 @@ class NeuralNetwork:
 
     def init_data(self, data):
         self.data = np.array(data)
+        self.data = self.data[0].reshape(-1, 1)
 
     def set_learning_rate(self, lr):
         self.lr = lr
@@ -70,7 +71,6 @@ class NeuralNetwork:
                 np.array(self.outputs[index - 1]).T, np.array(self.weights[index]))
 
         weighted_sum += self.biases[index]
-
         output = next_layer.activation(weighted_sum)
         output = np.array(output).reshape(-1, 1)
         self.outputs[index] = output
@@ -95,16 +95,10 @@ class NeuralNetwork:
                 next_layer_weights = self.weights[i + 1]
                 next_layer_delta = self.deltas[i + 1]
                 error = np.dot(next_layer_delta.T, next_layer_weights.T)
-                # needs to change to activation_deriv
-                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
-                self.deltas[i] = error * self.layers[i +
-                                                     1].activation_deriv(self.outputs[i])
             else:
                 # Calculate the error and deltas for the output layer
                 output_layer = self.layers[i]
                 error = -(targets - self.outputs[i])
-                # needs to change to activation_deriv
-                sigmoid_deriv = self.outputs[i] * (1 - self.outputs[i])
 
             self.deltas[i] = error * self.layers[i +
                                                  1].activation_deriv(self.outputs[i])
@@ -144,6 +138,7 @@ class NeuralNetwork:
         loss_history = []
         accuracy_history = []
 
+        # print(targets)
         for epoch in range(epoch_num):
             self.feedforward()
             self.backpropagation(targets)
@@ -161,29 +156,40 @@ class NeuralNetwork:
         return self.weights
 
 
-input_shape = 2
+data_train = pd.read_csv('./data_train.csv', header=None)
+
+data_test = pd.read_csv('./data_test.csv', header=None)
+
+x_train = data_train.iloc[:, 2:]
+
+y_train = data_train[1]
+
+print(np.array(x_train).shape[1])
+
+y_train_binary = convert_binary(y_train)
+
+input_shape = np.array(x_train).shape[1]
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
     DenseLayer(32, activation='sigmoid', weights_initializer='random'),
     DenseLayer(32, activation='sigmoid', weights_initializer='random'),
     DenseLayer(32, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(2, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(2, activation='softmax', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
 ]
 
 neural_net = NeuralNetwork(layers)
 input_data = [[0.1], [0.2]]
-neural_net.init_data(input_data)
+neural_net.init_data(x_train)
 
 
 output = neural_net.feedforward()
-print("Input Data:", input_data)
 print("Output:", output)
 for layer_idx, layer_output in enumerate(neural_net.outputs):
     print(
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
 
 neural_net.set_learning_rate(0.5)
-neural_net.train([[.4], [.6]], 70)
+neural_net.train(y_train_binary[0].reshape(-1, 1), 70)
 output = neural_net.feedforward()
 print("Updated Output:", output)

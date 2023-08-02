@@ -13,11 +13,14 @@ def sigmoid_(x):
     Raises:
     This function should not raise any Exception.
     """
-
+    # Clip input values to avoid overflow
+    x = np.clip(x, -500, 500)
     return (1 / (1 + math.e ** (-x)))
 
 
 def softmax_(x):
+    # the shape needs to be changed
+    x = x.reshape(-1, 1)
     """
     Compute the softmax of a vector.
     Args:
@@ -28,8 +31,7 @@ def softmax_(x):
     Raises:
     This function should not raise any Exception.
     """
-
-    exp_x = np.exp(x)
+    exp_x = np.exp(x - np.max(x, axis=0, keepdims=True))
     return exp_x / np.sum(exp_x, axis=0, keepdims=True)
 
 
@@ -159,3 +161,17 @@ def binary_crossentropy(target, output):
     output = np.clip(output, epsilon, 1 - epsilon)
     loss = -(target * np.log(output) + (1 - target) * np.log(1 - output))
     return np.mean(loss)
+
+
+def convert_binary(y):
+    y = np.array(y)
+    y_labels = np.unique(y)
+    binary_labels = []
+    for i in range(len(y)):
+        if y[i] == y_labels[0]:
+            binary_labels.append([1, 0])
+        elif y[i] == y_labels[1]:
+            binary_labels.append([0, 1])
+        else:
+            raise ValueError(f"Invalid label: {y[i]}")
+    return np.array(binary_labels)
