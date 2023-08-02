@@ -16,7 +16,10 @@ class NeuralNetwork:
 
     def init_data(self, data):
         self.data = np.array(data)
-        self.data = self.data[0].reshape(-1, 1)
+        self.data = self.data.reshape(self.data.shape[0], -1)[0]
+        self.data = self.data[None, :].reshape(-1, 1)
+        print(self.data)
+        # print(self.data.tolist())
 
     def set_learning_rate(self, lr):
         self.lr = lr
@@ -89,12 +92,16 @@ class NeuralNetwork:
         num_layers = len(self.layers)
 
         for i in range(num_layers - 2, -1, -1):
+            layer_input = self.outputs[i - 1] if i > 0 else self.data
+            # Update this line to reshape layer_input
+            layer_input = layer_input.reshape(len(layer_input), 1).T
+
             if i != num_layers - 2:
                 # Calculate the error and deltas for the hidden layers
                 next_layer = self.layers[i + 1]
                 next_layer_weights = self.weights[i + 1]
                 next_layer_delta = self.deltas[i + 1]
-                error = np.dot(next_layer_delta.T, next_layer_weights.T)
+                error = np.dot(next_layer_delta, next_layer_weights.T)
             else:
                 # Calculate the error and deltas for the output layer
                 output_layer = self.layers[i]
@@ -103,7 +110,7 @@ class NeuralNetwork:
             self.deltas[i] = error * self.layers[i +
                                                  1].activation_deriv(self.outputs[i])
             self.weights[i] -= self.lr * \
-                np.dot(self.outputs[i].T, self.deltas[i])
+                np.dot(layer_input.T, self.deltas[i])
 
             self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0)
 
@@ -191,7 +198,8 @@ for layer_idx, layer_output in enumerate(neural_net.outputs):
     print(
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output}")
 
-neural_net.set_learning_rate(0.5)
-neural_net.train(y_train_binary[0].reshape(-1, 1), 70)
-output = neural_net.feedforward()
-print("Updated Output:", output)
+# neural_net.set_learning_rate(0.5)
+# print(y_train_binary[0])
+# neural_net.train(y_train_binary[0], 70)
+# output = neural_net.feedforward()
+# print("Updated Output:", output)
