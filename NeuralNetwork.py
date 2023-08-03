@@ -30,7 +30,7 @@ class NeuralNetwork:
         begin_layer_nodes_count = begin_layer.shape
         next_layer_nodes_count = next_layer.shape
 
-        if begin_layer.weights_initializer == 'heUniform':
+        if next_layer.weights_initializer == 'heUniform':
             weights_matrix = heUniform_(
                 begin_layer_nodes_count, next_layer_nodes_count)
 
@@ -167,7 +167,7 @@ class NeuralNetwork:
 
             # print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
 
-        self.plot_graphs(loss_history, accuracy_history)
+        # self.plot_graphs(loss_history, accuracy_history)
 
         return self.weights
 
@@ -187,25 +187,26 @@ y_train_binary = convert_binary(y_train)
 input_shape = np.array(x_train).shape[1]
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
-    DenseLayer(32, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(33, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(34, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(2, activation='softmax', weights_initializer='random'),
-    # DenseLayer(1, activation='sigmoid', weights_initializer='random')
+    DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(33, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(34, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(2, activation='softmax', weights_initializer='heUniform'),
 ]
 
 neural_net = NeuralNetwork(layers)
-# print(np.array(x_train).T)
-neural_net.init_data(np.array(x_train).T)
+print(np.array(x_train).T[:, 0:3].shape)
+neural_net.init_data(np.array(x_train).T[:, 0:3])
 
 
 output = neural_net.feedforward()
 print("Output:", output)
-for layer_idx, layer_output in enumerate(neural_net.outputs):
-    print(
-        f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
+# for layer_idx, layer_output in enumerate(neural_net.outputs):
+#     print(
+#         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
 
 neural_net.set_learning_rate(0.5)
-neural_net.train(y_train_binary.T, 70)
+print(y_train_binary.T[:, 0:3])
+neural_net.train(y_train_binary.T[:, 0:3], 1)
 output = neural_net.feedforward()
+print("Updated Output:", output)
 print("Updated Output:", output)
