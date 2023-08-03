@@ -23,7 +23,7 @@ def softmax_(X):
     X = X - np.max(X, axis=1, keepdims=True)  # Normalize values
     exp_x = np.exp(X)
     result = exp_x / np.sum(exp_x, axis=1, keepdims=True)
-    return result.T
+    return result
 
 
 def heUniform_(num_input_nodes, num_output_nodes):
@@ -148,10 +148,15 @@ def r2score_(y, y_hat):
 
 
 def binary_crossentropy(targets, outputs):
-    N = targets.shape[0]  # Number of sasmples
-    # p = outputs[len(self.layers) - 2]  # Predictions
-    return -1/N * np.sum(targets * np.log(outputs) +
-                         (1 - targets) * np.log(1 - outputs))
+    N = targets.shape[1]  # Number of samples, assumed to be along axis 1
+    epsilon = 1e-7  # Small constant value for numerical stability
+
+    # Convert one-hot encoded targets and outputs to binary labels
+    binary_targets = np.argmax(targets, axis=0)
+    binary_outputs = np.argmax(outputs, axis=0)
+
+    return -1/N * np.sum(binary_targets * np.log(binary_outputs + epsilon) +
+                         (1 - binary_targets) * np.log(1 - binary_outputs + epsilon))
 
 
 def convert_binary(y):

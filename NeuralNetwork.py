@@ -15,11 +15,7 @@ class NeuralNetwork:
         self.lr = None
 
     def init_data(self, data):
-        self.data = np.array(data).T
-        # self.data = self.data.reshape(self.data.shape[0], -1)
-        # self.data = self.data[None, :].reshape(-1, 1)
-        print(self.data)
-        # print(self.data.tolist())
+        self.data = data
 
     def set_learning_rate(self, lr):
         self.lr = lr
@@ -71,10 +67,10 @@ class NeuralNetwork:
             weighted_sum = np.dot(self.data.T, np.array(self.weights[index]))
         else:
             weighted_sum = np.dot(
-                np.array(self.outputs[index - 1]), np.array(self.weights[index]))
+                np.array(self.outputs[index - 1]).T, np.array(self.weights[index]))
 
         weighted_sum += self.biases[index]
-        output = next_layer.activation(weighted_sum)
+        output = next_layer.activation(weighted_sum).T
         # print(output.shape)
         # output = np.array(output).reshape(-1, 1)
         self.outputs[index] = output
@@ -102,19 +98,27 @@ class NeuralNetwork:
                 next_layer = self.layers[i + 1]
                 next_layer_weights = self.weights[i + 1]
                 next_layer_delta = self.deltas[i + 1]
-                error = np.dot(next_layer_delta, next_layer_weights.T)
+                # print("next_layer_weights shape:", next_layer_weights.shape)
+                # print("next_layer_delta shape:", next_layer_delta.shape)
+                error = np.dot(next_layer_weights, next_layer_delta)
+                # print("next_layer_error shape:", error.shape)
+                self.deltas[i] = error * self.layers[i +
+                                                     1].activation_deriv(self.outputs[i])
+                self.weights[i] -= self.lr * \
+                    np.dot(layer_input, self.deltas[i].T)
+                self.biases[i] -= self.lr * np.sum(self.deltas[i].T, axis=0)
             else:
                 # Calculate the error and deltas for the output layer
                 output_layer = self.layers[i]
-                print("aa", targets)
                 error = -(targets - self.outputs[i])
+                self.deltas[i] = error * self.layers[i +
+                                                     1].activation_deriv(self.outputs[i])
+                self.weights[i] -= self.lr * \
+                    np.dot(layer_input, self.deltas[i].T)
+                self.biases[i] -= self.lr * np.sum(self.deltas[i].T, axis=0)
 
-            self.deltas[i] = error * self.layers[i +
-                                                 1].activation_deriv(self.outputs[i])
-            self.weights[i] -= self.lr * \
-                np.dot(layer_input.T, self.deltas[i])
-
-            self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0)
+            # print(layer_input.shape,
+            #       self.deltas[i].shape, self.weights[i].shape)
 
     def calculate_accuracy(self, target, output):
         predictions = output > 0.5
@@ -161,7 +165,7 @@ class NeuralNetwork:
                 targets_list, self.outputs[len(self.layers) - 2])
             accuracy_history.append(accuracy)
 
-            print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
+            # print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
 
         self.plot_graphs(loss_history, accuracy_history)
 
@@ -184,14 +188,15 @@ input_shape = np.array(x_train).shape[1]
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
     DenseLayer(32, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(32, activation='sigmoid', weights_initializer='random'),
-    DenseLayer(32, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(33, activation='sigmoid', weights_initializer='random'),
+    DenseLayer(34, activation='sigmoid', weights_initializer='random'),
     DenseLayer(2, activation='softmax', weights_initializer='random'),
     # DenseLayer(1, activation='sigmoid', weights_initializer='random')
 ]
 
 neural_net = NeuralNetwork(layers)
-neural_net.init_data(x_train)
+# print(np.array(x_train).T)
+neural_net.init_data(np.array(x_train).T)
 
 
 output = neural_net.feedforward()
@@ -200,8 +205,7 @@ for layer_idx, layer_output in enumerate(neural_net.outputs):
     print(
         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
 
-# neural_net.set_learning_rate(0.5)
-# # print(y_train_binary.T)
-# neural_net.train(y_train_binary.T, 70)
-# output = neural_net.feedforward()
-# print("Updated Output:", output)
+neural_net.set_learning_rate(0.5)
+neural_net.train(y_train_binary.T, 70)
+output = neural_net.feedforward()
+print("Updated Output:", output)
