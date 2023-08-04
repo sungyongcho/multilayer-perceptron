@@ -144,3 +144,76 @@ class NeuralNetwork:
         ax2.legend()
 
         plt.show()
+
+    def fit(self, data_train, epoch_num):
+        # targets = np.array(targets_list, ndmin=2)
+        x_train = data_train.iloc[:, 2:]
+
+        y_train = data_train[1]
+
+        y_train_binary = convert_binary(y_train)
+
+        x_train = np.array(x_train).T[:, 0:3]
+
+        y_train_binary = y_train_binary.T[:, 0:3]
+        print()
+
+        loss_history = []
+        accuracy_history = []
+
+        # print(targets)
+        for epoch in range(epoch_num):
+            y_pred = np.array([])
+            for i in range(x_train.shape[1]):
+                # print(x_train[:, i].reshape(-1, 1))
+                self.feedforward(x_train[:, i].reshape(-1, 1))
+                self.backpropagation(y_train_binary[:, i].reshape(-1, 1))
+            for i in range(x_train.shape[1]):
+                result = self.feedforward(x_train[:, i].reshape(-1, 1))
+                if y_pred.size == 0:
+                    y_pred = result
+                else:
+                    y_pred = np.hstack((y_pred, result))
+            print(y_pred)
+            loss = mse_(y_train_binary, y_pred)
+            print(loss)
+        #     # Calculate the binary cross-entropy loss
+
+        #     loss_history.append(loss)
+
+        #     accuracy = self.calculate_accuracy(
+        #         targets_list, self.outputs[len(self.layers) - 2])
+        #     accuracy_history.append(accuracy)
+
+        #     # print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
+
+        # # self.plot_graphs(loss_history, accuracy_history)
+
+
+data_train = pd.read_csv('./data_train.csv', header=None)
+
+data_test = pd.read_csv('./data_test.csv', header=None)
+
+
+input_shape = 30
+layers = [
+    DenseLayer(input_shape, activation='sigmoid'),
+    DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(33, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(34, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(2, activation='softmax', weights_initializer='heUniform'),
+]
+
+neural_net = NeuralNetwork(layers)
+
+
+# for layer_idx, layer_output in enumerate(neural_net.outputs):
+#     print(
+#         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
+
+neural_net.set_learning_rate(0.5)
+# print(y_train_binary.T[:, 0:3])
+neural_net.fit(data_train, 10)
+# output = neural_net.feedforward()
+# print("Updated Output:", output)
+# print("Updated Output:", output)
