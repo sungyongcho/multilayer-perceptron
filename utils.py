@@ -171,3 +171,10 @@ def convert_binary(y):
         else:
             raise ValueError(f"Invalid label: {y[i]}")
     return np.array(binary_labels)
+
+
+def normalization(data):
+    data_min = data.min(axis=0)
+    data_max = data.max(axis=0)
+    normalized_data = (data - data_min) / (data_max - data_min)
+    return normalized_data, data_min, data_max

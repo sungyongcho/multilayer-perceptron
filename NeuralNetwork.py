@@ -2,7 +2,7 @@ import pandas as pd
 from DenseLayer import DenseLayer
 import numpy as np
 from matplotlib import pyplot as plt
-from utils import binary_crossentropy, convert_binary, heUniform_, mse_
+from utils import binary_crossentropy, convert_binary, heUniform_, mse_, normalization
 
 np.random.seed(0)
 
@@ -153,15 +153,17 @@ class NeuralNetwork:
     def fit(self, data_train, epoch_num):
         # targets = np.array(targets_list, ndmin=2)
         x_train = data_train.iloc[:, 2:]
+        # x_train, _, _ = normalization(x_train)
+        # print(x_train)
 
         y_train = data_train[1]
 
         y_train_binary = convert_binary(y_train)
 
+        print(np.array(x_train))
         x_train = np.array(x_train).T[:, 0:3]
 
         y_train_binary = y_train_binary.T[:, 0:3]
-        print()
 
         loss_history = []
         accuracy_history = []
@@ -205,8 +207,8 @@ input_shape = 30
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
     DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
-    DenseLayer(33, activation='sigmoid', weights_initializer='heUniform'),
-    DenseLayer(34, activation='sigmoid', weights_initializer='heUniform'),
+    # DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
     DenseLayer(2, activation='softmax', weights_initializer='heUniform'),
 ]
 
@@ -217,7 +219,7 @@ neural_net = NeuralNetwork(layers)
 #     print(
 #         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
 
-neural_net.set_learning_rate(0.5)
+neural_net.set_learning_rate(0.03)
 # print(y_train_binary.T[:, 0:3])
 neural_net.fit(data_train, 1000)
 # output = neural_net.feedforward()
