@@ -206,7 +206,6 @@ print("Output:", output)
 
 neural_net.set_learning_rate(0.5)
 print(y_train_binary.T[:, 0:3])
-neural_net.train(y_train_binary.T[:, 0:3], 1)
+neural_net.train(y_train_binary.T[:, 0:3], 1000)
 output = neural_net.feedforward()
-print("Updated Output:", output)
 print("Updated Output:", output)
