@@ -2,7 +2,7 @@ import pandas as pd
 from DenseLayer import DenseLayer
 import numpy as np
 from matplotlib import pyplot as plt
-from utils import binary_crossentropy, convert_binary, heUniform_
+from utils import binary_crossentropy, convert_binary, heUniform_, mse_
 
 
 class NeuralNetwork:
@@ -58,29 +58,29 @@ class NeuralNetwork:
         biases_vector = np.zeros(next_layer_nodes_count)
         self.biases[layer_index] = biases_vector
 
-    def calculate_signal(self, index):
-        if index < 0 or index >= len(self.layers) - 1:
-            raise ValueError("Invalid input or output layer index")
+    def calculate_signal(self, data):
+        for i in range(len(self.layers) - 1):
+            next_layer = self.layers[i + 1]
+            if i == 0:
+                weighted_sum = np.dot(data.T, np.array(self.weights[i]))
+            else:
+                weighted_sum = np.dot(
+                    np.array(self.outputs[i - 1]).T, np.array(self.weights[i]))
 
-        next_layer = self.layers[index + 1]
-        if index == 0:
-            weighted_sum = np.dot(self.data.T, np.array(self.weights[index]))
-        else:
-            weighted_sum = np.dot(
-                np.array(self.outputs[index - 1]).T, np.array(self.weights[index]))
+            weighted_sum += self.biases[i]
+            output = next_layer.activation(weighted_sum).T
+            # print(output.shape)
+            # output = np.array(output).reshape(-1, 1)
+            self.outputs[i] = output
 
-        weighted_sum += self.biases[index]
-        output = next_layer.activation(weighted_sum).T
-        # print(output.shape)
-        # output = np.array(output).reshape(-1, 1)
-        self.outputs[index] = output
-
-    def feedforward(self):
+    def feedforward(self, data):
+        self.init_data(data)
         for i in range(len(self.layers) - 1):  # Loop through hidden layers
             if self.weights[i] is None:
                 self.init_weights(i)
                 self.init_biases(i)
-            self.calculate_signal(i)
+
+        self.calculate_signal(data)
 
         last_layer_index = len(self.layers) - 1
         return self.outputs[last_layer_index - 1]
@@ -144,69 +144,3 @@ class NeuralNetwork:
         ax2.legend()
 
         plt.show()
-
-    def train(self, targets_list, epoch_num):
-        # targets = np.array(targets_list, ndmin=2)
-
-        loss_history = []
-        accuracy_history = []
-
-        # print(targets)
-        for epoch in range(epoch_num):
-            self.feedforward()
-            self.backpropagation(targets_list)
-
-            # Calculate the binary cross-entropy loss
-            loss = binary_crossentropy(
-                targets_list, self.outputs[len(self.layers) - 2])
-            loss_history.append(loss)
-
-            accuracy = self.calculate_accuracy(
-                targets_list, self.outputs[len(self.layers) - 2])
-            accuracy_history.append(accuracy)
-
-            # print(f"Epoch {epoch + 1}/{epoch_num}: Loss: {loss}")
-
-        # self.plot_graphs(loss_history, accuracy_history)
-
-        return self.weights
-
-
-data_train = pd.read_csv('./data_train.csv', header=None)
-
-data_test = pd.read_csv('./data_test.csv', header=None)
-
-x_train = data_train.iloc[:, 2:]
-
-y_train = data_train[1]
-
-print(np.array(x_train).shape[1])
-
-y_train_binary = convert_binary(y_train)
-
-input_shape = np.array(x_train).shape[1]
-layers = [
-    DenseLayer(input_shape, activation='sigmoid'),
-    DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
-    DenseLayer(33, activation='sigmoid', weights_initializer='heUniform'),
-    DenseLayer(34, activation='sigmoid', weights_initializer='heUniform'),
-    DenseLayer(2, activation='softmax', weights_initializer='heUniform'),
-]
-
-neural_net = NeuralNetwork(layers)
-print(np.array(x_train).T[:, 0:3].shape)
-neural_net.init_data(np.array(x_train).T[:, 0:3])
-
-
-output = neural_net.feedforward()
-print("Output:", output)
-# for layer_idx, layer_output in enumerate(neural_net.outputs):
-#     print(
-#         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
-
-neural_net.set_learning_rate(0.5)
-print(y_train_binary.T[:, 0:3])
-neural_net.train(y_train_binary.T[:, 0:3], 1)
-output = neural_net.feedforward()
-print("Updated Output:", output)
-print("Updated Output:", output)
