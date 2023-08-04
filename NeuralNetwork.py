@@ -4,6 +4,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from utils import binary_crossentropy, convert_binary, heUniform_, mse_
 
+np.random.seed(0)
+
 
 class NeuralNetwork:
     def __init__(self, layers):
@@ -77,8 +79,11 @@ class NeuralNetwork:
         self.init_data(data)
         for i in range(len(self.layers) - 1):  # Loop through hidden layers
             if self.weights[i] is None:
+                print("iiiiiiiiiiiiiiiiiiiii")
                 self.init_weights(i)
                 self.init_biases(i)
+            self.weights[i] = np.array(self.weights[i])
+            self.biases[i] = np.array(self.biases[i])
 
         self.calculate_signal(data)
 
@@ -174,11 +179,12 @@ class NeuralNetwork:
                     y_pred = result
                 else:
                     y_pred = np.hstack((y_pred, result))
-            print(y_pred)
+            # print(y_pred)
             loss = mse_(y_train_binary, y_pred)
             print(loss)
         #     # Calculate the binary cross-entropy loss
 
+        print(y_pred)
         #     loss_history.append(loss)
 
         #     accuracy = self.calculate_accuracy(
@@ -213,7 +219,7 @@ neural_net = NeuralNetwork(layers)
 
 neural_net.set_learning_rate(0.5)
 # print(y_train_binary.T[:, 0:3])
-neural_net.fit(data_train, 10)
+neural_net.fit(data_train, 1000)
 # output = neural_net.feedforward()
 # print("Updated Output:", output)
 # print("Updated Output:", output)
