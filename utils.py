@@ -147,18 +147,6 @@ def r2score_(y, y_hat):
     return 1 - (ssr / sst)
 
 
-def binary_crossentropy(targets, outputs):
-    N = targets.shape[1]  # Number of samples, assumed to be along axis 1
-    epsilon = 1e-7  # Small constant value for numerical stability
-
-    # Convert one-hot encoded targets and outputs to binary labels
-    binary_targets = np.argmax(targets, axis=0)
-    binary_outputs = np.argmax(outputs, axis=0)
-
-    return -1/N * np.sum(binary_targets * np.log(binary_outputs + epsilon) +
-                         (1 - binary_targets) * np.log(1 - binary_outputs + epsilon))
-
-
 def convert_binary(y):
     y = np.array(y)
     y_labels = np.unique(y)
@@ -178,3 +166,14 @@ def normalization(data):
     data_max = data.max(axis=0)
     normalized_data = (data - data_min) / (data_max - data_min)
     return normalized_data, data_min, data_max
+
+
+def binary_crossentropy(y, y_pred, eps=1e-15):
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    loss = -np.mean(y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred))
+    return float(loss)
+
+
+def binary_crossentropy_deriv(y, y_pred, eps=1e-15):
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    return -(y / y_pred - (1 - y) / (1 - y_pred))

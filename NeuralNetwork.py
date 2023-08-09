@@ -2,7 +2,7 @@ import pandas as pd
 from DenseLayer import DenseLayer
 import numpy as np
 from matplotlib import pyplot as plt
-from utils import binary_crossentropy, convert_binary, heUniform_, mse_, normalization
+from utils import binary_crossentropy, binary_crossentropy_deriv, convert_binary, heUniform_, mse_, normalization
 
 np.random.seed(0)
 
@@ -40,6 +40,9 @@ class NeuralNetwork:
             weights_matrix = np.random.normal(0.0,
                                               pow(begin_layer_nodes_count, -0.5),
                                               (begin_layer_nodes_count, next_layer_nodes_count))
+        elif next_layer.weights_initializer == 'zero':
+            weights_matrix = np.zeros(
+                (begin_layer_nodes_count, next_layer_nodes_count))
 
         # ============== let's not delete ====================
         # if layer_index == 0:
@@ -57,7 +60,7 @@ class NeuralNetwork:
         next_layer = self.layers[layer_index + 1]
         next_layer_nodes_count = next_layer.shape
 
-        biases_vector = np.zeros(next_layer_nodes_count)
+        biases_vector = np.zeros((next_layer_nodes_count, 1))
         self.biases[layer_index] = biases_vector
 
     def calculate_signal(self, data):
@@ -69,7 +72,7 @@ class NeuralNetwork:
                 weighted_sum = np.dot(
                     np.array(self.outputs[i - 1]).T, np.array(self.weights[i]))
 
-            weighted_sum += self.biases[i]
+            weighted_sum += self.biases[i].T
             output = next_layer.activation(weighted_sum).T
             # print(output.shape)
             # output = np.array(output).reshape(-1, 1)
@@ -79,7 +82,6 @@ class NeuralNetwork:
         self.init_data(data)
         for i in range(len(self.layers) - 1):  # Loop through hidden layers
             if self.weights[i] is None:
-                print("iiiiiiiiiiiiiiiiiiiii")
                 self.init_weights(i)
                 self.init_biases(i)
             self.weights[i] = np.array(self.weights[i])
@@ -90,40 +92,26 @@ class NeuralNetwork:
         last_layer_index = len(self.layers) - 1
         return self.outputs[last_layer_index - 1]
 
-    def backpropagation(self, targets):
+    def backpropagation(self, output_gradient):
         num_layers = len(self.layers)
 
         for i in range(num_layers - 2, -1, -1):
-            layer_input = self.outputs[i - 1] if i > 0 else self.data
-            # Update this line to reshape layer_input
-            # layer_input = layer_input.reshape(len(layer_input), 1).T
+            activation_gradient = (
+                self.layers[i + 1].activation(self.outputs[i])) * (1 - self.layers[i + 1].activation(self.outputs[i]))
 
-            if i != num_layers - 2:
-                # Calculate the error and deltas for the hidden layers
-                next_layer = self.layers[i + 1]
-                next_layer_weights = self.weights[i + 1]
-                next_layer_delta = self.deltas[i + 1]
-                # print("next_layer_weights shape:", next_layer_weights.shape)
-                # print("next_layer_delta shape:", next_layer_delta.shape)
-                error = np.dot(next_layer_weights, next_layer_delta)
-                # print("next_layer_error shape:", error.shape)
-                self.deltas[i] = error * self.layers[i +
-                                                     1].activation_deriv(self.outputs[i])
-                self.weights[i] -= self.lr * \
-                    np.dot(layer_input, self.deltas[i].T)
-                self.biases[i] -= self.lr * np.sum(self.deltas[i].T, axis=0)
+            self.biases[i] -= self.lr * output_gradient * activation_gradient
+
+            if i > 0:
+                weights_gradient = np.dot(
+                    output_gradient * activation_gradient, self.outputs[i - 1].T).T
             else:
-                # Calculate the error and deltas for the output layer
-                output_layer = self.layers[i]
-                error = -(targets - self.outputs[i])
-                self.deltas[i] = error * self.layers[i +
-                                                     1].activation_deriv(self.outputs[i])
-                self.weights[i] -= self.lr * \
-                    np.dot(layer_input, self.deltas[i].T)
-                self.biases[i] -= self.lr * np.sum(self.deltas[i].T, axis=0)
+                weights_gradient = np.dot(
+                    output_gradient * activation_gradient, self.data.T).T
 
-            # print(layer_input.shape,
-            #       self.deltas[i].shape, self.weights[i].shape)
+            bias_gradient = output_gradient * activation_gradient
+            output_gradient = np.dot(
+                self.weights[i], output_gradient * activation_gradient)
+            self.weights[i] -= self.lr * weights_gradient
 
     def calculate_accuracy(self, target, output):
         predictions = output > 0.5
@@ -170,23 +158,28 @@ class NeuralNetwork:
 
         # print(targets)
         for epoch in range(epoch_num):
-            y_pred = np.array([])
+            y_pred_batch = np.array([])
             for i in range(x_train.shape[1]):
                 # print(x_train[:, i].reshape(-1, 1))
-                self.feedforward(x_train[:, i].reshape(-1, 1))
-                self.backpropagation(y_train_binary[:, i].reshape(-1, 1))
+                y_pred = self.feedforward(x_train[:, i].reshape(-1, 1))
+                # print(y_pred)
+                # print(y_train_binary[:, i].reshape(-1, 1))
+                gradient = binary_crossentropy_deriv(
+                    y_train_binary[:, i].reshape(-1, 1), y_pred)
+                self.backpropagation(gradient)
             for i in range(x_train.shape[1]):
                 result = self.feedforward(x_train[:, i].reshape(-1, 1))
-                if y_pred.size == 0:
-                    y_pred = result
+                if y_pred_batch.size == 0:
+                    y_pred_batch = result
                 else:
-                    y_pred = np.hstack((y_pred, result))
-            # print(y_pred)
-            loss = mse_(y_train_binary, y_pred)
+                    y_pred_batch = np.hstack((y_pred_batch, result))
+
+            print(y_pred_batch)
+            loss = binary_crossentropy(y_train_binary, y_pred_batch)
             print(loss)
         #     # Calculate the binary cross-entropy loss
 
-        print(y_pred)
+        # print(y_pred)
         #     loss_history.append(loss)
 
         #     accuracy = self.calculate_accuracy(
@@ -206,10 +199,10 @@ data_test = pd.read_csv('./data_test.csv', header=None)
 input_shape = 30
 layers = [
     DenseLayer(input_shape, activation='sigmoid'),
-    DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
+    DenseLayer(32, activation='sigmoid', weights_initializer='zero'),
     # DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
-    DenseLayer(32, activation='sigmoid', weights_initializer='heUniform'),
-    DenseLayer(2, activation='softmax', weights_initializer='heUniform'),
+    DenseLayer(32, activation='sigmoid', weights_initializer='zero'),
+    DenseLayer(2, activation='softmax', weights_initializer='zero'),
 ]
 
 neural_net = NeuralNetwork(layers)
