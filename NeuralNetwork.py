@@ -60,8 +60,17 @@ class NeuralNetwork:
         next_layer = self.layers[layer_index + 1]
         next_layer_nodes_count = next_layer.shape
 
-        biases_vector = np.zeros((next_layer_nodes_count, 1))
-        self.biases[layer_index] = biases_vector
+        if next_layer.weights_initializer == 'heUniform':
+            bias_vector = heUniform_(next_layer_nodes_count, 1)
+
+        elif next_layer.weights_initializer == 'random':
+            bias_vector = np.random.normal(0.0,
+                                           pow(next_layer_nodes_count, -0.5),
+                                           (next_layer_nodes_count, 1))
+        elif next_layer.weights_initializer == 'zero':
+            bias_vector = np.zeros(
+                (next_layer_nodes_count, 1))
+        self.biases[layer_index] = bias_vector
 
     def calculate_signal(self, data):
         for i in range(len(self.layers) - 1):
@@ -96,10 +105,11 @@ class NeuralNetwork:
         num_layers = len(self.layers)
 
         for i in range(num_layers - 2, -1, -1):
-            activation_gradient = (
-                self.layers[i + 1].activation(self.outputs[i])) * (1 - self.layers[i + 1].activation(self.outputs[i]))
-
+            activation_gradient = (self.outputs[i]) * (1 - self.outputs[i])
+            # if (i == num_layers - 2):
+            #     print(activation_gradient, output_gradient)
             self.biases[i] -= self.lr * output_gradient * activation_gradient
+            # print(output_gradient * activation_gradient)
 
             if i > 0:
                 weights_gradient = np.dot(
@@ -212,9 +222,9 @@ neural_net = NeuralNetwork(layers)
 #     print(
 #         f"Output of Layer in between {layer_idx} and {layer_idx + 1}: {layer_output.shape}")
 
-neural_net.set_learning_rate(0.03)
+neural_net.set_learning_rate(1e-3)
 # print(y_train_binary.T[:, 0:3])
-neural_net.fit(data_train, 1000)
+neural_net.fit(data_train, 3)
 # output = neural_net.feedforward()
 # print("Updated Output:", output)
 # print("Updated Output:", output)
