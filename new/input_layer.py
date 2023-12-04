@@ -4,8 +4,8 @@ import numpy as np
 
 # Custom input layer class
 class InputLayer:
-    def __init__(self, input_shape, name):
-        self.input_shape = input_shape
+    def __init__(self, shape, name):
+        self.shape = shape
         self.name = name
 
     def build(self):

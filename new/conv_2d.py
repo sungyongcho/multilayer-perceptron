@@ -1,5 +1,10 @@
 import numpy as np
 
+from new.input_layer import InputLayer
+
+
+import numpy as np
+
 
 class Conv2D:
     def __init__(self, filters, kernel_size, activation, padding):
@@ -7,9 +12,10 @@ class Conv2D:
         self.kernel_size = kernel_size
         self.activation = activation
         self.padding = padding
+        self.weights = None
+        self.biases = None
 
-    def build(self, input_layer):
-        input_shape = input_layer.input_shape
+    def build(self, input_shape):
         input_channels = input_shape[-1]
 
         # Initialize weights and biases
@@ -18,78 +24,78 @@ class Conv2D:
         )
         self.biases = np.zeros(self.filters)
 
+    def __call__(self, input_data):
+        # Build the layer if not already built
+        if self.weights is None or self.biases is None:
+            self.build(input_data)
+
+        return self.conv2d(input_data)
+
     def conv2d(self, input_data):
-        strides = (1, 1)
-
+        # Padding
         if self.padding == "same":
-            # Calculate 'same' padding to match TensorFlow's behavior
-            output_height = input_data.shape[1]
-            output_width = input_data.shape[2]
+            input_data = self.add_padding(input_data)
 
-            pad_height = max(
-                0,
-                (output_height - 1) * strides[0]
-                + self.kernel_size[0]
-                - input_data.shape[1],
-            )
-            pad_width = max(
-                0,
-                (output_width - 1) * strides[1]
-                + self.kernel_size[1]
-                - input_data.shape[2],
-            )
+        # Convolution
+        output = self.perform_convolution(input_data)
 
-            pad_top = pad_height // 2
-            pad_bottom = pad_height - pad_top
-            pad_left = pad_width // 2
-            pad_right = pad_width - pad_left
+        # Activation
+        if self.activation is not None:
+            output = self.apply_activation(output)
 
-            pad_width = ((0, 0), (pad_top, pad_bottom), (pad_left, pad_right), (0, 0))
+        return output
+
+    def add_padding(self, input_data):
+        # Calculate padding for 'same' padding
+        pad_for_row = (self.kernel_size[0] - 1) // 2
+        pad_for_col = (self.kernel_size[1] - 1) // 2
+
+        # Pad the input data
+        if len(input_data.shape) == 2:
+            pad_width = ((pad_for_row, pad_for_row), (pad_for_col, pad_for_col))
         else:
-            pad_width = (
-                (0, 0),
-                (int(self.padding[0]), int(self.padding[0])),
-                (int(self.padding[1]), int(self.padding[1])),
-                (0, 0),
-            )
+            pad_width = ((pad_for_row, pad_for_row), (pad_for_col, pad_for_col), (0, 0))
 
-        input_data_padded = np.pad(input_data, pad_width=pad_width, mode="constant")
+        padded_input = np.pad(input_data, pad_width=pad_width, mode="constant")
+        # print(padded_input)
+        return padded_input
 
-        output_height = (
-            input_data.shape[1] - self.kernel_size[0] + 2 * pad_width[1][0]
-        ) // strides[0] + 1
-        output_width = (
-            input_data.shape[2] - self.kernel_size[1] + 2 * pad_width[2][0]
-        ) // strides[1] + 1
+    def perform_convolution(self, input_data):
+        strides = (1, 1)
+        output_height = (input_data.shape[1] - self.kernel_size[0]) // strides[0] + 1
+        output_width = (input_data.shape[2] - self.kernel_size[1]) // strides[1] + 1
 
         output = np.zeros(
             (input_data.shape[0], output_height, output_width, self.filters)
         )
 
-        # for h in range(output_height):
-        #     for w in range(output_width):
-        #         input_slice = input_data_padded[
-        #             :,
-        #             h * strides[0] : h * strides[0] + self.kernel_size[0],
-        #             w * strides[1] : w * strides[1] + self.kernel_size[1],
-        #             :,
-        #         ]
-        #         # Adjust dimensions for broadcasting
-        #         input_slice_reshaped = np.expand_dims(input_slice, axis=-1)
-        #         weights_reshaped = np.expand_dims(self.weights, axis=(0, 1, 2))
+        for h in range(output_height):
+            for w in range(output_width):
+                output[:, h, w, :] = np.sum(
+                    input_data[
+                        :,
+                        h * strides[0] : h * strides[0] + self.kernel_size[0],
+                        w * strides[1] : w * strides[1] + self.kernel_size[1],
+                        :,
+                    ]
+                    * self.weights,
+                    axis=(1, 2, 3),
+                )
 
-        #         # Perform convolution for each filter separately
-        #         output[:, h, w, :] = np.sum(
-        #             input_slice_reshaped * weights_reshaped, axis=(1, 2, 3)
-        #         )
-
-        # # Add biases after convolution for each filter
-        # output += self.biases
+        # Add biases
+        output += self.biases
 
         return output
 
-    def activate(self, input_data):
+    def apply_activation(self, output):
         if self.activation == "relu":
-            return np.maximum(0, input_data)
-        else:
-            return input_data
+            return np.maximum(0, output)
+        # Add more activation functions if needed
+
+        return output
+
+
+# Example usage
+# my_input_layer = InputLayer(shape=(19, 19, 17), name="board_input")
+# my_conv_layer = Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same")
+# my_conv_output = my_conv_layer(my_input_layer)
