@@ -30,7 +30,8 @@ def activation_relu(x):
 
 
 def convolution_2d(input_data, kernel_size, weights, use_bias=False, activation=None):
-    input_height, input_width, input_depth = input_data.shape
+    padded_data = add_padding(input_data, kernel_size)
+    input_height, input_width, input_depth = padded_data.shape
     kernel_height, kernel_width = kernel_size
 
     # Calculate output dimensions
@@ -41,19 +42,21 @@ def convolution_2d(input_data, kernel_size, weights, use_bias=False, activation=
     output = np.zeros((output_height, output_width))
 
     # Add biases if use_bias is True
-    if use_bias == True:
-        biases = np.zeros((output_height, output_width)) if use_bias else 0
+    if use_bias:
+        biases = np.zeros((output_height, output_width))
+    else:
+        biases = 0
 
     # Perform 2D convolution for each channel
     for h in range(output_height):
         for w in range(output_width):
             for d in range(input_depth):
                 output[h, w] += np.sum(
-                    input_data[h : h + kernel_height, w : w + kernel_width, d]
+                    padded_data[h : h + kernel_height, w : w + kernel_width, d]
                     * weights[:, :, d, 0]
                 )
 
-            if use_bias == True:  # Add biases if use_bias is True
+            if use_bias:  # Add biases if use_bias is True
                 output[h, w] += biases[h, w]
 
             # Apply activation function
@@ -97,7 +100,7 @@ print(conv_weights.shape)
 
 # Use your own implementation
 result = convolution_2d(
-    add_padding(input_data, kernel_size),
+    input_data,
     kernel_size,
     weights=conv_weights,
     use_bias=False,
