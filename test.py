@@ -16,15 +16,20 @@ tf_conv_layer = tf.keras.layers.Conv2D(256, (3, 3), activation="relu", padding="
 )
 tf_output = tf_conv_layer
 # Create a model just for checking the output
-model = tf.keras.Model(inputs=[tf_input_board], outputs=tf_output)
+tf_model = tf.keras.Model(inputs=[tf_input_board], outputs=tf_output)
 # Use the predict method to obtain the output from the Conv2D layer
-tf_conv_output = model.predict(np.expand_dims(random_input, axis=0))
+tf_conv_output = tf_model.predict(np.expand_dims(random_input, axis=0))
+
 print(tf_conv_output.shape)
 # # # Example usage
-# my_input_board = InputLayer(shape=(19, 19, 17), name="board_input")
-# my_conv_layer = Conv2D(
-#     filters=256, kernel_size=(3, 3), activation="relu", padding="same"
-# )
+my_input_board = InputLayer(shape=(19, 19, 17), name="board_input")
+my_conv_layer = Conv2D(
+    filters=256,
+    kernel_size=(3, 3),
+    weights=tf_model.layers[1].get_weights()[0],
+    activation="relu",
+    padding="same",
+)(my_input_board)
 # my_conv_layer.build(my_input_board.shape)  # Specify input shape
 # my_conv_output = my_conv_layer(my_input_board)
 

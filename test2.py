@@ -29,7 +29,9 @@ def activation_relu(x):
     return np.maximum(0, x)
 
 
-def convolution_2d(input_data, kernel_size, weights, use_bias=False, activation=None):
+def convolution_2d(
+    input_data, filters, kernel_size, weights, use_bias=False, activation=None
+):
     padded_data = add_padding(input_data, kernel_size)
     input_height, input_width, input_depth = padded_data.shape
     kernel_height, kernel_width = kernel_size
@@ -39,36 +41,44 @@ def convolution_2d(input_data, kernel_size, weights, use_bias=False, activation=
     output_width = input_width - kernel_width + 1
 
     # Initialize the output with zeros
-    output = np.zeros((output_height, output_width))
+    output = np.zeros((output_height, output_width, filters))
+
+    print("before", output.shape)
 
     # Add biases if use_bias is True
     if use_bias:
-        biases = np.zeros((output_height, output_width))
+        biases = np.zeros((output_height, output_width, filters))
     else:
         biases = 0
 
     # Perform 2D convolution for each channel
+    # Perform 2D convolution for each filter
     for h in range(output_height):
         for w in range(output_width):
-            for d in range(input_depth):
-                output[h, w] += np.sum(
-                    padded_data[h : h + kernel_height, w : w + kernel_width, d]
-                    * weights[:, :, d, 0]
-                )
+            for f in range(filters):
+                for d in range(input_depth):
+                    output[h, w, f] += np.sum(
+                        padded_data[h : h + kernel_height, w : w + kernel_width, d]
+                        * weights[:, :, d, f]
+                    )
 
-            if use_bias:  # Add biases if use_bias is True
-                output[h, w] += biases[h, w]
+                if use_bias:  # Add biases if use_bias is True
+                    output[h, w, f] += biases[h, w, f]
 
-            # Apply activation function
-            if activation is not None:
-                output[h, w] = activation(output[h, w])
+                # Apply activation function
+                if activation is not None:
+                    output[h, w, f] = activation(output[h, w, f])
+
+    # print("after", output.shape)
+    # return output
 
     return output
 
 
 # Example usage
-input_data = np.random.randn(5, 5, 4)
+input_data = np.random.randn(5, 5, 10)
 kernel_size = (3, 3)
+filters = 256
 
 # Convert the data to the format expected by TensorFlow
 tf_input_data = np.expand_dims(input_data, axis=0)  # Add batch dimension
@@ -81,7 +91,7 @@ tf_input_board = tf.keras.layers.Input(
 
 # Add biases and set use_bias=True
 tf_conv_layer = tf.keras.layers.Conv2D(
-    1, kernel_size, activation="relu", use_bias=False, padding="same"
+    filters, kernel_size, activation="relu", use_bias=False, padding="same"
 )(tf_input_board)
 
 tf_model = tf.keras.Model(inputs=[tf_input_board], outputs=tf_conv_layer)
@@ -89,7 +99,8 @@ tf_model = tf.keras.Model(inputs=[tf_input_board], outputs=tf_conv_layer)
 # Use the predict method to obtain the output from the Conv2D layer
 tf_conv_output = tf_model.predict(tf_input_data)
 print("TensorFlow Convolution Output:")
-print(tf_conv_output[0, :, :, 0])  # Remove the batch dimension for comparison
+print(tf_conv_output)
+# print(tf_conv_output[0, :, :, 0])  # Remove the batch dimension for comparison
 
 # Access the Conv2D layer and get its weights
 conv_weights = tf_model.layers[1].get_weights()[
@@ -101,10 +112,16 @@ print(conv_weights.shape)
 # Use your own implementation
 result = convolution_2d(
     input_data,
+    filters,
     kernel_size,
     weights=conv_weights,
     use_bias=False,
     activation=activation_relu,
 )
+
 print("\nYour Convolution Output:")
-print(result)
+print(tf_conv_output.shape)
+result_two = np.expand_dims(result, axis=0)  # Add batch dimension``
+print(result.shape, result_two.shape)
+
+np.testing.assert_allclose(tf_conv_output, result_two, rtol=1e-5, atol=1e-8)
