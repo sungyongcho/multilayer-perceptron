@@ -1,8 +1,9 @@
 import pandas as pd
-from DenseLayer import DenseLayer
+from srcs.dense_layer import DenseLayer
 import numpy as np
 from matplotlib import pyplot as plt
-from utils import (
+from srcs.layers import Layers
+from srcs.utils import (
     binary_crossentropy,
     binary_crossentropy_deriv,
     convert_binary,
@@ -24,13 +25,12 @@ class NeuralNetwork:
             self.biases = [None] * (len(layers) - 1)
             self.lr = None
 
-    def createNetwork(self, layers):
-        self.__init__(layers)
+    def createNetwork(self, layers) -> Layers:
+        # self.__init__(layers)
 
-        return self.layers
+        return Layers(layers)
 
     def fit(
-        self, network, data_train, data_valid, loss, learning_rate, batch_size, epochs
+        self, layers, data_train, data_valid, loss, learning_rate, batch_size, epochs
     ):
-        pass
-        # print(network, data_train, data_valid, loss, learning_rate, batch_size, epochs)
+        print(layers)

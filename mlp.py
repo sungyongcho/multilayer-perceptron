@@ -1,18 +1,7 @@
 import argparse
 import pandas as pd
-from Layers import Layers
-
-from NeuralNetwork import NeuralNetwork
-
-# # Replace 'your_file.csv' with the actual path to your CSV file
-# file_path = "data_test.csv"
-
-# # Read the CSV file into a pandas DataFrame
-
-
-# # Display the shape of the DataFrame (number of rows, number of columns)
-# print("x_train shape : ", data_train.shape)
-# print("x_valid shape : ", data_valid.shape)
+from srcs.layers import Layers
+from srcs.neural_network import NeuralNetwork
 
 
 def execute_code_from_file(file_path):
@@ -22,7 +11,11 @@ def execute_code_from_file(file_path):
 
     print(code)
     # Execute the code as a Python script
-    exec(code)
+    # exec(code)
+
+    exec(code, globals(), locals())
+
+    return model, locals()["network"]
 
 
 if __name__ == "__main__":
@@ -44,6 +37,6 @@ if __name__ == "__main__":
         layers = Layers()
         input_shape = 30
         output_shape = 2
-        execute_code_from_file(args.source)
+        model, network = execute_code_from_file(args.source)
     else:
         print("Please provide a file path using the --source flag.")
