@@ -9,10 +9,10 @@ def execute_code_from_file(file_path):
     with open(file_path, "r") as file:
         code = file.read()
 
+    # printing the code to check
     print(code)
-    # Execute the code as a Python script
-    # exec(code)
 
+    # Execute the code as a Python script
     exec(code, globals(), locals())
 
     return model, locals()["network"]
@@ -38,5 +38,6 @@ if __name__ == "__main__":
         input_shape = 30
         output_shape = 2
         model, network = execute_code_from_file(args.source)
+        print(model)
     else:
         print("Please provide a file path using the --source flag.")

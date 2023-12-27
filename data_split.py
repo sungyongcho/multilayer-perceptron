@@ -12,7 +12,7 @@ def is_valid_csv(input_file):
     True if the file is a valid CSV file, False otherwise.
     """
     try:
-        with open(input_file, 'r') as csvfile:
+        with open(input_file, "r") as csvfile:
             dialect = csv.Sniffer().sniff(csvfile.read(1024))
             return dialect is not None
     except csv.Error:
@@ -27,7 +27,7 @@ def csv_splitter(input_file, output_train_file, output_test_file, proportion):
     output_test_file: The path of the output CSV file for the test set.
     proportion: The proportion of data to be assigned to the training set.
     """
-    with open(input_file, 'r') as csvfile:
+    with open(input_file, "r") as csvfile:
         reader = csv.reader(csvfile)
         header = next(reader)  # Read the header
 
@@ -45,13 +45,13 @@ def csv_splitter(input_file, output_train_file, output_test_file, proportion):
     data_test = data[split_index:]
 
     # Write the training data to the output_train_file
-    with open(output_train_file, 'w', newline='') as csvfile:
+    with open(output_train_file, "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(header)
         writer.writerows(data_train)
 
     # Write the test data to the output_test_file
-    with open(output_test_file, 'w', newline='') as csvfile:
+    with open(output_test_file, "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(header)
         writer.writerows(data_test)
@@ -71,12 +71,12 @@ if __name__ == "__main__":
             # Set the output file names based on the base name of the input file
             output_train_file = f"{base_name}_train.csv"
             output_test_file = f"{base_name}_test.csv"
-            if (len(sys.argv) == 2):
-                csv_splitter(input_file, output_train_file,
-                             output_test_file, 0.8)
+            if len(sys.argv) == 2:
+                csv_splitter(input_file, output_train_file, output_test_file, 0.8)
             else:
-                csv_splitter(input_file, output_train_file,
-                             output_test_file, float(sys.argv[2]))
+                csv_splitter(
+                    input_file, output_train_file, output_test_file, float(sys.argv[2])
+                )
         else:
             print("Error: Invalid CSV file:", input_file)
             sys.exit(1)
