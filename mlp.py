@@ -36,37 +36,31 @@ if __name__ == "__main__":
 
     # Check if the --file argument is provided
     if args.source:
-        # Execute the code from the specified file
-        # data_train = pd.read_csv("data_train.csv")
-        # data_valid = pd.read_csv("data_test.csv")
-        # Sequential Input data
-        # Create a simple dataset
-        # data = {
-        #     "Feature1": [1.2, 2.0, 0.5, 1.0],
-        #     "Feature2": [0.8, 1.5, 0.2, 1.8],
-        #     "Feature3": [3.0, 2.5, 1.0, 2.2],
-        #     "Target": [0, 1, 0, 1],
-        # }
-
-        # # Create a DataFrame from the dictionary
-        # df = pd.DataFrame(data)
-
-        data_train = np.array(
-            [[1.2, 2.0, 0.5, 1.0], [0.8, 1.5, 0.2, 1.8], [3.0, 2.5, 1.0, 2.2]]
-        )
-        data_train = data_train.T
-        data_valid = np.array([[1], [0], [1], [0]])
+        # data_train = np.array(
+        #     [[1.2, 2.0, 0.5, 1.0], [0.8, 1.5, 0.2, 1.8], [3.0, 2.5, 1.0, 2.2]]
+        # )
+        # data_train = data_train.T
+        # data_valid = np.array([[1], [0], [1], [0]])
         # data_valid = to_categorical(data_valid)
+
+        # data = pd.read_csv("data.csv", header=None, index_col=0)
+        # data_train = data.drop(data.columns[0], axis=1).to_numpy()
+        # y_bool = data[data.columns[0]] == "M"
+        # y = y_bool.astype(int).to_numpy().reshape(-1, 1)
+        # data_valid = y
+        data_train = pd.read_csv("data_train.csv", header=None, index_col=0)
+        data_valid = pd.read_csv("data_train.csv", header=None, index_col=0)
+
         model = NeuralNetwork()
         layers = Layers()
 
-        input_shape = 3
+        input_shape = data_train.shape[1] - 1
         output_shape = 1
         model, network = execute_code_from_file(args.source)
-        print(model.outputs[-1])
-        print("after", model.outputs)
+        # print(model.outputs[-1])
+        # print("after", model.outputs)
 
-        print(model.predict(data_train))
+        # print(model.predict(data_train))
 
         # for i in range(len(model.outputs)):
         #     print(model.outputs[i].shape)

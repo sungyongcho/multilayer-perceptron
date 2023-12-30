@@ -23,6 +23,12 @@ def sigmoid_derivative(x):
     return x * (1 - x)
 
 
+def heUniform(shape):
+    fan_in = shape[0]
+    limit = np.sqrt(6.0 / fan_in)
+    return np.random.uniform(low=-limit, high=limit, size=shape)
+
+
 class NeuralNetwork:
     def __init__(self, layers=None):
         if layers != None:
@@ -41,14 +47,26 @@ class NeuralNetwork:
 
     def _init_weights(self):
         for i in range(len(self.layers) - 1):
-            self.weights[i] = np.zeros((self.layers[i].shape, self.layers[i + 1].shape))
-        self.weights[0][0][0] = 0.7
-        self.weights[0][0][1] = 0.3
-        self.weights[0][1][0] = 0.4
-        self.weights[0][1][1] = 0.6
+            if self.layers[i + 1].weights_initializer == "random":
+                self.weights[i] = np.random.randn(
+                    self.layers[i].shape, self.layers[i + 1].shape
+                )
+            elif self.layers[i + 1].weights_initializer == "zeros":
+                self.weights[i] = np.zeros(
+                    (self.layers[i].shape, self.layers[i + 1].shape)
+                )
+            elif self.layers[i + 1].weights_initializer == "heUniform":
+                self.weights[i] = heUniform(
+                    (self.layers[i].shape, self.layers[i + 1].shape)
+                )
 
-        self.weights[1][0][0] = 0.55
-        self.weights[1][1][0] = 0.45
+        # self.weights[0][0][0] = 0.7
+        # self.weights[0][0][1] = 0.3
+        # self.weights[0][1][0] = 0.4
+        # self.weights[0][1][1] = 0.6
+
+        # self.weights[1][0][0] = 0.55
+        # self.weights[1][1][0] = 0.45
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
@@ -95,23 +113,25 @@ class NeuralNetwork:
                 )
                 self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0)
 
-    def plot_graphs(self, loss_history, accuracy_history):
+    def plot_graphs(self, train_loss_history, valid_loss_history):
         fig = plt.figure(figsize=(10, 5))
         # Plot the loss history (first subplot)
         ax1 = fig.add_subplot(1, 2, 1)  # 1 row, 2 columns, first plot
-        ax1.plot(loss_history, label="training loss")
+        ax1.plot(train_loss_history, label="training loss")
+        ax1.plot(valid_loss_history, "--", label="valid loss")
         ax1.set_xlabel("epoches")
         ax1.set_ylabel("loss")
         ax1.grid(True)
         ax1.legend()
 
-        ax2 = fig.add_subplot(1, 2, 2)  # 1 row, 2 columns, second plot
-        ax2.plot(accuracy_history, label="training acc")
-        ax2.set_xlabel("Epoch")
-        ax2.set_ylabel("Accuracy")
-        ax2.set_title("Learning Curves")
-        ax2.grid(True)
-        ax2.legend()
+        plt.show()
+        # ax2 = fig.add_subplot(1, 2, 2)  # 1 row, 2 columns, second plot
+        # ax2.plot(accuracy_history, label="training acc")
+        # ax2.set_xlabel("Epoch")
+        # ax2.set_ylabel("Accuracy")
+        # ax2.set_title("Learning Curves")
+        # ax2.grid(True)
+        # ax2.legend()
 
     def mse_loss(self, y_true, y_pred):
         return np.mean((y_true - y_pred) ** 2)
@@ -119,24 +139,55 @@ class NeuralNetwork:
     def fit(
         self, layers, data_train, data_valid, loss, learning_rate, batch_size, epochs
     ):
+        X_train = data_train.drop(data_train.columns[0], axis=1).to_numpy()
+        y_train = (
+            (data_train[data_train.columns[0]] == "M")
+            .astype(int)
+            .to_numpy()
+            .reshape(-1, 1)
+        )
+
+        X_valid = data_valid.drop(data_valid.columns[0], axis=1).to_numpy()
+        y_valid = (
+            (data_valid[data_valid.columns[0]] == "M")
+            .astype(int)
+            .to_numpy()
+            .reshape(-1, 1)
+        )
+
         self.lr = learning_rate
         if self.layers is None and layers is not None:
             self.__init__(layers)
 
-        loss_history = []
-        accuracy_history = []
+        train_loss_history = []
+        valid_loss_history = []
 
         for epoch in range(epochs):
-            epoch_loss = 0
+            train_epoch_loss = 0
             for i in range(data_train.shape[0]):
-                print("train", data_train[i])
-                self.feedforward(data_train[i])
-                self.backpropagation(data_valid[i], data_train[i])
-                loss = self.mse_loss(data_valid[i], self.outputs[-1])
-                epoch_loss += loss
-                print(f"Epoch {epoch}, loss: {loss}")
-            avg_epoch_loss = epoch_loss / data_train.shape[0]
-            loss_history.append(avg_epoch_loss)
-            print(f"Epoch {epoch}, Average Loss: {avg_epoch_loss}")
+                # print(X_train[i])
+                self.feedforward(X_train[i])
+                self.backpropagation(y_train[i], X_train[i])
+                loss = self.mse_loss(y_train[i], self.outputs[-1])
+                train_epoch_loss += loss
+            avg_epoch_train_loss = train_epoch_loss / data_train.shape[0]
+            train_loss_history.append(avg_epoch_train_loss)
+            print(
+                f"Epoch {epoch}, Average Loss: {avg_epoch_train_loss}",
+                data_train.shape[0],
+            )
 
-        print(self.weights)
+            # Validation loss
+            valid_epoch_loss = 0
+
+            for i in range(data_train.shape[0]):
+                self.feedforward(X_valid[i])
+                loss = self.mse_loss(y_valid[i], self.outputs[-1])
+                valid_epoch_loss += loss
+
+            avg_valid_epoch_loss = valid_epoch_loss / data_valid.shape[0]
+            valid_loss_history.append(avg_valid_epoch_loss)
+
+        self.plot_graphs(train_loss_history, valid_loss_history)
+
+        # print(self.weights)
