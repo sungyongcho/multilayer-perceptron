@@ -51,13 +51,16 @@ if __name__ == "__main__":
         # # Create a DataFrame from the dictionary
         # df = pd.DataFrame(data)
 
-        data_train = np.array([[0.5, 0.3]])
-        data_valid = np.array([1])
+        data_train = np.array(
+            [[1.2, 2.0, 0.5, 1.0], [0.8, 1.5, 0.2, 1.8], [3.0, 2.5, 1.0, 2.2]]
+        )
+        data_train = data_train.T
+        data_valid = np.array([[1], [0], [1], [0]])
         # data_valid = to_categorical(data_valid)
         model = NeuralNetwork()
         layers = Layers()
 
-        input_shape = 2
+        input_shape = 3
         output_shape = 1
         model, network = execute_code_from_file(args.source)
         print(model.outputs[-1])

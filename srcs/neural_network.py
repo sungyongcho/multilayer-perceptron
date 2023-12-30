@@ -85,17 +85,13 @@ class NeuralNetwork:
         # Update the weights and biases for each layer
         for i in range(len(self.weights)):
             if i == 0:
-                # print(self.weights[i])
-                # print(self.outputs[i])
-                # print(self.deltas[i])
-                # print(data_train)
-                self.weights[i] -= self.lr * data_train.reshape(-1, 1).dot(
-                    self.deltas[i].reshape(1, -1)
+                self.weights[i] -= self.lr * np.dot(
+                    data_train.reshape(-1, 1), self.deltas[i].reshape(1, -1)
                 )
                 self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0)
             else:
-                self.weights[i] -= self.lr * self.outputs[i - 1].reshape(-1, 1).dot(
-                    self.deltas[i].reshape(1, -1)
+                self.weights[i] -= self.lr * np.dot(
+                    self.outputs[i - 1].reshape(-1, 1), self.deltas[i].reshape(1, -1)
                 )
                 self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0)
 
@@ -133,9 +129,10 @@ class NeuralNetwork:
         for epoch in range(epochs):
             epoch_loss = 0
             for i in range(data_train.shape[0]):
+                print("train", data_train[i])
                 self.feedforward(data_train[i])
-                self.backpropagation(data_valid, data_train[i])
-                loss = self.mse_loss(data_valid, self.outputs[-1])
+                self.backpropagation(data_valid[i], data_train[i])
+                loss = self.mse_loss(data_valid[i], self.outputs[-1])
                 epoch_loss += loss
                 print(f"Epoch {epoch}, loss: {loss}")
             avg_epoch_loss = epoch_loss / data_train.shape[0]
