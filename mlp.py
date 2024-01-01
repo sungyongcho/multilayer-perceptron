@@ -1,13 +1,8 @@
 import argparse
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 from srcs.layers import Layers
 from srcs.neural_network import NeuralNetwork
-from tensorflow.keras.utils import to_categorical
-
-np.random.seed(0)
-tf.random.set_seed(0)
 
 
 def execute_code_from_file(file_path):
@@ -48,14 +43,18 @@ if __name__ == "__main__":
         # y_bool = data[data.columns[0]] == "M"
         # y = y_bool.astype(int).to_numpy().reshape(-1, 1)
         # data_valid = y
-        data_train = pd.read_csv("data_train.csv", header=None, index_col=0)
-        data_valid = pd.read_csv("data_train.csv", header=None, index_col=0)
+
+        # data_train = pd.read_csv("data_train.csv", header=None, index_col=0)
+        # data_valid = pd.read_csv("data_train.csv", header=None, index_col=0)
+
+        data_train = None
+        data_valid = None
 
         model = NeuralNetwork()
         layers = Layers()
 
-        input_shape = data_train.shape[1] - 1
-        output_shape = 1
+        input_shape = 2
+        output_shape = 3
         model, network = execute_code_from_file(args.source)
         # print(model.outputs[-1])
         # print("after", model.outputs)

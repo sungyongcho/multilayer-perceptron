@@ -12,7 +12,11 @@ from srcs.utils import (
     normalization,
 )
 
-np.random.seed(0)
+
+from nnfs.datasets import spiral_data
+import nnfs
+
+nnfs.init()
 
 
 def sigmoid(x):
@@ -27,6 +31,14 @@ def heUniform(shape):
     fan_in = shape[0]
     limit = np.sqrt(6.0 / fan_in)
     return np.random.uniform(low=-limit, high=limit, size=shape)
+
+
+def relu(x):
+    return np.maximum(0, x)
+
+
+def relu_derivative(x):
+    return np.where(x > 0, 1, 0)
 
 
 class NeuralNetwork:
@@ -139,21 +151,23 @@ class NeuralNetwork:
     def fit(
         self, layers, data_train, data_valid, loss, learning_rate, batch_size, epochs
     ):
-        X_train = data_train.drop(data_train.columns[0], axis=1).to_numpy()
-        y_train = (
-            (data_train[data_train.columns[0]] == "M")
-            .astype(int)
-            .to_numpy()
-            .reshape(-1, 1)
-        )
+        # X_train = data_train.drop(data_train.columns[0], axis=1).to_numpy()
+        # y_train = (
+        #     (data_train[data_train.columns[0]] == "M")
+        #     .astype(int)
+        #     .to_numpy()
+        #     .reshape(-1, 1)
+        # )
 
-        X_valid = data_valid.drop(data_valid.columns[0], axis=1).to_numpy()
-        y_valid = (
-            (data_valid[data_valid.columns[0]] == "M")
-            .astype(int)
-            .to_numpy()
-            .reshape(-1, 1)
-        )
+        # X_valid = data_valid.drop(data_valid.columns[0], axis=1).to_numpy()
+        # y_valid = (
+        #     (data_valid[data_valid.columns[0]] == "M")
+        #     .astype(int)
+        #     .to_numpy()
+        #     .reshape(-1, 1)
+        # )
+
+        X_train, y_train = spiral_data(samples=100, classes=3)
 
         self.lr = learning_rate
         if self.layers is None and layers is not None:
@@ -164,30 +178,31 @@ class NeuralNetwork:
 
         for epoch in range(epochs):
             train_epoch_loss = 0
-            for i in range(data_train.shape[0]):
+            for i in range(X_train.shape[0]):
                 # print(X_train[i])
                 self.feedforward(X_train[i])
                 self.backpropagation(y_train[i], X_train[i])
                 loss = self.mse_loss(y_train[i], self.outputs[-1])
                 train_epoch_loss += loss
-            avg_epoch_train_loss = train_epoch_loss / data_train.shape[0]
+            avg_epoch_train_loss = train_epoch_loss / X_train.shape[0]
             train_loss_history.append(avg_epoch_train_loss)
             print(
                 f"Epoch {epoch}, Average Loss: {avg_epoch_train_loss}",
-                data_train.shape[0],
+                X_train.shape[0],
             )
+        print(self.weights)
 
-            # Validation loss
-            valid_epoch_loss = 0
+        # Validation loss
+        #     valid_epoch_loss = 0
 
-            for i in range(data_train.shape[0]):
-                self.feedforward(X_valid[i])
-                loss = self.mse_loss(y_valid[i], self.outputs[-1])
-                valid_epoch_loss += loss
+        #     for i in range(data_train.shape[0]):
+        #         self.feedforward(X_valid[i])
+        #         loss = self.mse_loss(y_valid[i], self.outputs[-1])
+        #         valid_epoch_loss += loss
 
-            avg_valid_epoch_loss = valid_epoch_loss / data_valid.shape[0]
-            valid_loss_history.append(avg_valid_epoch_loss)
+        #     avg_valid_epoch_loss = valid_epoch_loss / data_valid.shape[0]
+        #     valid_loss_history.append(avg_valid_epoch_loss)
 
-        self.plot_graphs(train_loss_history, valid_loss_history)
+        # self.plot_graphs(train_loss_history, valid_loss_history)
 
         # print(self.weights)
