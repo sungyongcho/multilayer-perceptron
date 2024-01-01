@@ -2,7 +2,9 @@ from nnfs.datasets import spiral_data
 import numpy as np
 import nnfs
 
-nnfs.init()
+nnfs.init(42)
+
+np.random.seed(42)
 
 
 # Dense layer
@@ -10,7 +12,7 @@ class Layer_Dense:
     # Layer initialization
     def __init__(self, n_inputs, n_neurons):
         # Initialize weights and biases
-        self.weights = 0.01 * np.random.randn(n_inputs, n_neurons)
+        self.weights = np.random.randn(n_inputs, n_neurons)
         self.biases = np.zeros((1, n_neurons))
 
     # Forward pass
@@ -18,7 +20,7 @@ class Layer_Dense:
         # Remember input values
         self.inputs = inputs
         # Calculate output values from inputs, weights and biases
-        self.output = np.dot(inputs, self.weights) + self.biases
+        self.output = np.dot(inputs, self.weights)
 
     # Backward pass
     def backward(self, dvalues):
@@ -147,6 +149,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy:
     def __init__(self):
         self.activation = Activation_Softmax()
         self.loss = Loss_CategoricalCrossentropy()
+        self.loss_check = None
 
     # Forward pass
     def forward(self, inputs, y_true):
@@ -176,7 +179,15 @@ class Activation_Softmax_Loss_CategoricalCrossentropy:
 
 
 # Create dataset
-X, y = spiral_data(samples=100, classes=3)
+# Load X_train from the CSV file
+X, y = spiral_data(samples=100, classes=2)
+
+print(y)
+
+# X = np.loadtxt("X_train.csv", delimiter=",")
+
+# # Load y_train from the CSV file
+# y = np.loadtxt("y_train.csv", delimiter=",")
 
 # Create Dense layer with 2 input features and 3 output values
 dense1 = Layer_Dense(2, 3)
@@ -191,44 +202,46 @@ dense2 = Layer_Dense(3, 3)
 # Create Softmax classifier's combined loss and activation
 loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
 
-# Perform a forward pass of our training data through this layer
+# # Perform a forward pass of our training data through this layer
 dense1.forward(X)
 
-# Perform a forward pass through activation function
-# takes the output of first dense layer here
+# # Perform a forward pass through activation function
+# # takes the output of first dense layer here
 activation1.forward(dense1.output)
 
-# Perform a forward pass through second Dense layer
-# takes outputs of activation function of first layer as inputs
+# # Perform a forward pass through second Dense layer
+# # takes outputs of activation function of first layer as inputs
 dense2.forward(activation1.output)
 
-# Perform a forward pass through the activation/loss function
-# takes the output of second dense layer here and returns loss
+# print(dense2.output)
+# # Perform a forward pass through the activation/loss function
+# # takes the output of second dense layer here and returns loss
 loss = loss_activation.forward(dense2.output, y)
+print(loss_activation.activation.output)
 # Let's see output of the first few samples:
-print(loss_activation.output[:5])
+# print(loss_activation.output[:5])
 
-# Print loss value
-print("loss:", loss)
+# # Print loss value
+# print("loss:", loss)
 
-# Calculate accuracy from output of activation2 and targets
-# calculate values along first axis
-predictions = np.argmax(loss_activation.output, axis=1)
-if len(y.shape) == 2:
-    y = np.argmax(y, axis=1)
-accuracy = np.mean(predictions == y)
+# # Calculate accuracy from output of activation2 and targets
+# # calculate values along first axis
+# predictions = np.argmax(loss_activation.output, axis=1)
+# if len(y.shape) == 2:
+#     y = np.argmax(y, axis=1)
+# accuracy = np.mean(predictions == y)
 
-# Print accuracy
-print("acc:", accuracy)
+# # Print accuracy
+# print("acc:", accuracy)
 
-# Backward pass
-loss_activation.backward(loss_activation.output, y)
-dense2.backward(loss_activation.dinputs)
-activation1.backward(dense2.dinputs)
-dense1.backward(activation1.dinputs)
+# # Backward pass
+# loss_activation.backward(loss_activation.output, y)
+# dense2.backward(loss_activation.dinputs)
+# activation1.backward(dense2.dinputs)
+# dense1.backward(activation1.dinputs)
 
-# Print gradients
-print(dense1.dweights)
-print(dense1.dbiases)
-print(dense2.dweights)
-print(dense2.dbiases)
+# # Print gradients
+# print(dense1.weights - 0.1 * dense1.dweights)
+# print(dense1.biases - 0.1 * dense1.dbiases)
+# print(dense2.weights - 0.1 * dense2.dweights)
+# print(dense2.biases - 0.1 * dense2.dbiases)

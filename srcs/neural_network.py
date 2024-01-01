@@ -1,6 +1,5 @@
 import pandas as pd
 from srcs.dense_layer import DenseLayer
-import numpy as np
 from matplotlib import pyplot as plt
 from srcs.layers import Layers
 from srcs.utils import (
@@ -14,9 +13,13 @@ from srcs.utils import (
 
 
 from nnfs.datasets import spiral_data
+import numpy as np
+
 import nnfs
 
-nnfs.init()
+nnfs.init(42)
+
+np.random.seed(42)
 
 
 def sigmoid(x):
@@ -41,6 +44,13 @@ def relu_derivative(x):
     return np.where(x > 0, 1, 0)
 
 
+def softmax(x):
+    exp_x = np.exp(
+        x - np.max(x, axis=-1, keepdims=True)
+    )  # Subtracting the maximum for numerical stability
+    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+
 class NeuralNetwork:
     def __init__(self, layers=None):
         if layers != None:
@@ -58,20 +68,30 @@ class NeuralNetwork:
         return f"{self.layers}" if self.layers is not None else None
 
     def _init_weights(self):
-        for i in range(len(self.layers) - 1):
-            if self.layers[i + 1].weights_initializer == "random":
-                self.weights[i] = np.random.randn(
-                    self.layers[i].shape, self.layers[i + 1].shape
-                )
-            elif self.layers[i + 1].weights_initializer == "zeros":
-                self.weights[i] = np.zeros(
-                    (self.layers[i].shape, self.layers[i + 1].shape)
-                )
-            elif self.layers[i + 1].weights_initializer == "heUniform":
-                self.weights[i] = heUniform(
-                    (self.layers[i].shape, self.layers[i + 1].shape)
-                )
+        self.weights[0] = np.array(
+            [[0.35778737, 0.5607845, 1.0830512], [1.053802, -1.3776693, -0.937825]]
+        )
+        self.weights[1] = np.array(
+            [
+                [0.5150353, 0.51378596, 0.51504767],
+                [3.8527315, 0.5708905, 1.1355656],
+                [0.9540018, 0.65139127, -0.31526923],
+            ]
+        )
 
+        # for i in range(len(self.layers) - 1):
+        #     if self.layers[i + 1].weights_initializer == "random":
+        #         self.weights[i] = np.random.randn(
+        #             self.layers[i].shape, self.layers[i + 1].shape
+        #         )
+        #     elif self.layers[i + 1].weights_initializer == "zeros":
+        #         self.weights[i] = np.zeros(
+        #             (self.layers[i].shape, self.layers[i + 1].shape)
+        #         )
+        #     elif self.layers[i + 1].weights_initializer == "heUniform":
+        #         self.weights[i] = heUniform(
+        #             (self.layers[i].shape, self.layers[i + 1].shape)
+        #         )
         # self.weights[0][0][0] = 0.7
         # self.weights[0][0][1] = 0.3
         # self.weights[0][1][0] = 0.4
@@ -79,6 +99,7 @@ class NeuralNetwork:
 
         # self.weights[1][0][0] = 0.55
         # self.weights[1][1][0] = 0.45
+        print(self.weights[0])
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
@@ -92,9 +113,22 @@ class NeuralNetwork:
 
     def feedforward(self, row):
         input_data = row
+        self.data = []
         for i in range(len(self.weights)):
-            # Calculate the weighted sum and apply the activation function
-            input_data = sigmoid(np.dot(input_data, self.weights[i]))
+            if self.layers[i + 1].activation == "sigmoid":
+                # Calculate the weighted sum and apply the activation function
+                input_data = sigmoid(
+                    np.dot(input_data, self.weights[i]) + self.biases[i]
+                )
+            elif self.layers[i + 1].activation == "relu":
+                # Calculate the weighted sum and apply the activation function
+                input_data = relu(np.dot(input_data, self.weights[i]))
+            elif self.layers[i + 1].activation == "softmax":
+                # Calculate the weighted sum and apply the activation function
+                self.iamchecking.append(softmax(np.dot(input_data, self.weights[i])))
+                input_data = softmax(
+                    np.dot(input_data, self.weights[i]) + self.biases[i]
+                )
             self.outputs[i] = input_data
 
     def predict(self, row):
@@ -110,7 +144,10 @@ class NeuralNetwork:
         # Backpropagate the error to previous layers
         for i in reversed(range(len(self.deltas) - 1)):
             error = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
-            self.deltas[i] = error * sigmoid_derivative(self.outputs[i])
+            if self.layers[i + 1].activation == "softmax":
+                self.deltas[i] = error * sigmoid_derivative(self.outputs[i])
+            elif self.layers[i + 1].activation == "relu":
+                self.deltas[i] = error * relu_derivative(self.outputs[i])
 
         # Update the weights and biases for each layer
         for i in range(len(self.weights)):
@@ -167,31 +204,33 @@ class NeuralNetwork:
         #     .reshape(-1, 1)
         # )
 
-        X_train, y_train = spiral_data(samples=100, classes=3)
+        # Load X_train from the CSV file
+        X_train = np.loadtxt("X_train.csv", delimiter=",")
 
+        # Load y_train from the CSV file
+        y_train = np.loadtxt("y_train.csv", delimiter=",")
+        print(X_train)
         self.lr = learning_rate
         if self.layers is None and layers is not None:
             self.__init__(layers)
 
         train_loss_history = []
         valid_loss_history = []
-
+        self.iamchecking = []
         for epoch in range(epochs):
             train_epoch_loss = 0
             for i in range(X_train.shape[0]):
-                # print(X_train[i])
                 self.feedforward(X_train[i])
-                self.backpropagation(y_train[i], X_train[i])
-                loss = self.mse_loss(y_train[i], self.outputs[-1])
-                train_epoch_loss += loss
-            avg_epoch_train_loss = train_epoch_loss / X_train.shape[0]
-            train_loss_history.append(avg_epoch_train_loss)
-            print(
-                f"Epoch {epoch}, Average Loss: {avg_epoch_train_loss}",
-                X_train.shape[0],
-            )
-        print(self.weights)
-
+            #     self.backpropagation(y_train[i], X_train[i])
+            #     loss = self.mse_loss(y_train[i], self.outputs[-1])
+            #     train_epoch_loss += loss
+            # avg_epoch_train_loss = train_epoch_loss / X_train.shape[0]
+            # train_loss_history.append(avg_epoch_train_loss)
+            # print(
+            #     f"Epoch {epoch}, Average Loss: {avg_epoch_train_loss}",
+            #     X_train.shape[0],
+            # )
+        print(np.array(self.iamchecking))
         # Validation loss
         #     valid_epoch_loss = 0
 
