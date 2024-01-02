@@ -306,11 +306,11 @@ class NeuralNetwork:
             # for i in range(X_train.shape[0]):
             self.feedforward(X_train)
             # print(np.array(self.iamchecking))
-            loss = np.mean(crossentropy(y_train, np.array(self.iamchecking)))
+            self.iamchecking = np.squeeze(np.array(self.iamchecking))
+            loss = np.mean(crossentropy(y_train, self.iamchecking))
             print(loss)
             # print(self.accuracy(y_train, np.array(self.iamchecking)))
             # for i in range(X_train.shape[0]):
-            self.iamchecking = np.squeeze(np.array(self.iamchecking))
             self.backpropagation(np.array(self.iamchecking), y_train)
             #     loss = self.mse_loss(y_train[i], self.outputs[-1])
             #     train_epoch_loss += loss
