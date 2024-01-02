@@ -25,10 +25,13 @@ class Layer_Dense:
     # Backward pass
     def backward(self, dvalues):
         # Gradients on parameters
+        print(self.inputs)
         self.dweights = np.dot(self.inputs.T, dvalues)
+        print(self.dweights)
         self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
         # Gradient on values
         self.dinputs = np.dot(dvalues, self.weights.T)
+        # print(self.weights - (0.1 * self.dweights))
 
 
 # ReLU activation
@@ -45,7 +48,6 @@ class Activation_ReLU:
         # Since we need to modify original variable,
         # let's make a copy of values first
         self.dinputs = dvalues.copy()
-
         # Zero gradient where input values were negative
         self.dinputs[self.inputs <= 0] = 0
 
@@ -105,11 +107,14 @@ class Loss_CategoricalCrossentropy(Loss):
     # Forward pass
     def forward(self, y_pred, y_true):
         # Number of samples in a batch
+
         samples = len(y_pred)
 
         # Clip data to prevent division by 0
         # Clip both sides to not drag mean towards any value
         y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+
+        # print(samples, y_pred_clipped)
 
         # Probabilities for target values -
         # only if categorical labels
@@ -122,6 +127,7 @@ class Loss_CategoricalCrossentropy(Loss):
 
         # Losses
         negative_log_likelihoods = -np.log(correct_confidences)
+        # print(negative_log_likelihoods)
         return negative_log_likelihoods
 
     # Backward pass
@@ -182,7 +188,6 @@ class Activation_Softmax_Loss_CategoricalCrossentropy:
 # Load X_train from the CSV file
 X, y = spiral_data(samples=100, classes=2)
 
-print(y)
 
 # X = np.loadtxt("X_train.csv", delimiter=",")
 
@@ -217,31 +222,32 @@ dense2.forward(activation1.output)
 # # Perform a forward pass through the activation/loss function
 # # takes the output of second dense layer here and returns loss
 loss = loss_activation.forward(dense2.output, y)
-print(loss_activation.activation.output)
 # Let's see output of the first few samples:
 # print(loss_activation.output[:5])
 
-# # Print loss value
-# print("loss:", loss)
+# Print loss value
+print("loss:", loss)
 
-# # Calculate accuracy from output of activation2 and targets
-# # calculate values along first axis
-# predictions = np.argmax(loss_activation.output, axis=1)
-# if len(y.shape) == 2:
-#     y = np.argmax(y, axis=1)
-# accuracy = np.mean(predictions == y)
+# Calculate accuracy from output of activation2 and targets
+# calculate values along first axis
+predictions = np.argmax(loss_activation.output, axis=1)
+# print(predictions)
+if len(y.shape) == 2:
+    y = np.argmax(y, axis=1)
+accuracy = np.mean(predictions == y)
 
-# # Print accuracy
-# print("acc:", accuracy)
+# Print accuracy
+print("acc:", accuracy)
 
 # # Backward pass
-# loss_activation.backward(loss_activation.output, y)
-# dense2.backward(loss_activation.dinputs)
-# activation1.backward(dense2.dinputs)
-# dense1.backward(activation1.dinputs)
+loss_activation.backward(loss_activation.output, y)
+dense2.backward(loss_activation.dinputs)
+activation1.backward(dense2.dinputs)
+dense1.backward(activation1.dinputs)
+
 
 # # Print gradients
 # print(dense1.weights - 0.1 * dense1.dweights)
 # print(dense1.biases - 0.1 * dense1.dbiases)
-# print(dense2.weights - 0.1 * dense2.dweights)
+# print(dense2.dinputs)
 # print(dense2.biases - 0.1 * dense2.dbiases)

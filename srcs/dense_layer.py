@@ -12,6 +12,7 @@ def softmax_derivative(softmax_output):
 
 class DenseLayer:
     def __init__(self, shape, activation, weights_initializer=None):
+        self.inputs = []
         self.shape = shape
         self.activation = activation
         self.activation_deriv = None

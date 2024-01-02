@@ -13,7 +13,14 @@ class Layers:
         return len(self.layers) if hasattr(self, "layers") else 0
 
     def __getitem__(self, index):
-        return self.layers[index] if 0 <= index < len(self.layers) else None
+        if isinstance(index, int):
+            # Handle negative indices
+            if index < 0:
+                index += len(self.layers)
+            return self.layers[index] if 0 <= index < len(self.layers) else None
+        else:
+            # Handle slices if needed
+            return self.layers[index]
 
     def DenseLayer(self, *args, **kwargs):
         # Create a DenseLayer and add it to the list
