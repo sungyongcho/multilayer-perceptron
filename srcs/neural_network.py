@@ -161,7 +161,7 @@ class NeuralNetwork:
                 input_data = relu(np.dot(input_data, self.weights[i]))
             elif self.layers[i + 1].activation == "softmax":
                 # Calculate the weighted sum and apply the activation function
-                self.iamchecking.append(softmax(np.dot(input_data, self.weights[i])))
+                self.iamchecking = softmax(np.dot(input_data, self.weights[i]))
                 input_data = softmax(
                     np.dot(input_data, self.weights[i]) + self.biases[i]
                 )
@@ -212,7 +212,6 @@ class NeuralNetwork:
                 self.deltas[i] = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
             # self.weights[i] -= self.lr * np.dot(self.layers[i].inputs.T, self.deltas[i])
 
-        print(self.weights[0])
         # print(self.layers[1].inputs)
         # print(self.weights[1])
         # print(self.deltas[0])
@@ -301,14 +300,14 @@ class NeuralNetwork:
 
         train_loss_history = []
         valid_loss_history = []
-        self.iamchecking = []
         for epoch in range(epochs):
+            self.iamchecking = []
             train_epoch_loss = 0
             # for i in range(X_train.shape[0]):
             self.feedforward(X_train)
             # print(np.array(self.iamchecking))
             loss = np.mean(crossentropy(y_train, np.array(self.iamchecking)))
-            # print(loss)
+            print(loss)
             # print(self.accuracy(y_train, np.array(self.iamchecking)))
             # for i in range(X_train.shape[0]):
             self.iamchecking = np.squeeze(np.array(self.iamchecking))

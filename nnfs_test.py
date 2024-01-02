@@ -158,6 +158,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy:
 
     # Forward pass
     def forward(self, inputs, y_true):
+        print(inputs)
         # Output layer's activation function
         self.activation.forward(inputs)
         # Set the output
@@ -227,22 +228,22 @@ loss = loss_activation.forward(dense2.output, y)
 # Print loss value
 print("loss:", loss)
 
-# Calculate accuracy from output of activation2 and targets
-# calculate values along first axis
-predictions = np.argmax(loss_activation.output, axis=1)
-# print(predictions)
-if len(y.shape) == 2:
-    y = np.argmax(y, axis=1)
-accuracy = np.mean(predictions == y)
+# # Calculate accuracy from output of activation2 and targets
+# # calculate values along first axis
+# predictions = np.argmax(loss_activation.output, axis=1)
+# # print(predictions)
+# if len(y.shape) == 2:
+#     y = np.argmax(y, axis=1)
+# accuracy = np.mean(predictions == y)
 
-# Print accuracy
-print("acc:", accuracy)
+# # Print accuracy
+# print("acc:", accuracy)
 
 # # Backward pass
-loss_activation.backward(loss_activation.output, y)
-dense2.backward(loss_activation.dinputs)
-activation1.backward(dense2.dinputs)
-dense1.backward(activation1.dinputs)
+# loss_activation.backward(loss_activation.output, y)
+# dense2.backward(loss_activation.dinputs)
+# activation1.backward(dense2.dinputs)
+# dense1.backward(activation1.dinputs)
 
 # print(activation1.dinputs)
 # # Print gradients
@@ -250,6 +251,5 @@ dense1.backward(activation1.dinputs)
 # print(dense2.dweights)
 # print(dense2.weights - 0.1 * dense2.dweights)
 # print(dense1.biases - 0.1 * dense1.dbiases)
-print("aa", dense1.weights - 0.1 * dense1.dweights)
 # print(dense2.dinputs)
 # print(dense2.biases - 0.1 * dense2.dbiases)
