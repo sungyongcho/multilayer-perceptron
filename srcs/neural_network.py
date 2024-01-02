@@ -40,8 +40,9 @@ def relu(x):
     return np.maximum(0, x)
 
 
-def relu_derivative(x):
-    return np.where(x > 0, 1, 0)
+def relu_derivative(x, inputs):
+    x[inputs <= 0] = 0
+    return x
 
 
 def softmax(x):
@@ -49,6 +50,11 @@ def softmax(x):
         x - np.max(x, axis=-1, keepdims=True)
     )  # Subtracting the maximum for numerical stability
     return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+
+def softmax_derivative(y_pred, y_true):
+    y_pred[range(len(y_pred)), y_true] -= 1
+    return y_pred / len(y_pred)
 
 
 def crossentropy(y_true, y_pred):
@@ -172,20 +178,44 @@ class NeuralNetwork:
         # print(target_row)
         if self.layers[-1].activation == "softmax":
             # print(len(target_row), y_true)
-            target_row[range(len(target_row)), y_true] -= 1
-            self.deltas[-1] = target_row / len(target_row)
+            self.deltas[-1] = softmax_derivative(target_row, y_true)
+            # self.weights[-1] -= self.lr * np.dot(self.outputs[0].T, self.deltas[-1])
+            di = np.dot(self.deltas[-1], self.weights[-1].T)
+            self.weights[-1] -= self.lr * np.dot(self.outputs[0].T, self.deltas[-1])
+            # self.weights[-1] -= self.lr * np.dot(self.outputs[0].T, self.deltas[-1])
         elif self.layers[-1].activation == "sigmoid":
             error = -(target_row - self.outputs[-1])
             self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
-        dw_1 = np.dot(self.layers[1].inputs.T, self.deltas[1])
-        # dw_1 = np.dot(np.squeeze(np.array(self.layers[1].inputs)).T, self.deltas[-1])
-        di_1 = np.dot(self.deltas[1], self.weights[1].T)
 
-        di_0 = di_1.copy()
-        di_0[self.layers[1].inputs <= 0] = 0
+        # dw_1 = np.dot(self.layers[1].inputs.T, self.deltas[1])
+        # # dw_1 = np.dot(np.squeeze(np.array(self.layers[1].inputs)).T, self.deltas[-1])
+        # di_1 = np.dot(self.deltas[1], self.weights[1].T)
 
-        dw_0 = np.dot(self.layers[0].inputs.T, di_0)
-        print(dw_0)
+        # di_0 = di_1.copy()
+        # di_0[self.layers[1].inputs <= 0] = 0
+
+        # dw_0 = np.dot(self.layers[0].inputs.T, di_0)
+        # print(dw_0)
+        # print(np.dot(self.deltas[1], self.weights[1].T))
+        for i in reversed(range(len(self.weights) - 1)):
+            if self.layers[i + 1].activation == "relu":
+                self.deltas[i] = relu_derivative(di, self.layers[i + 1].inputs)
+                di = np.dot(self.deltas[i], self.weights[i].T)
+                self.weights[i] -= self.lr * np.dot(
+                    self.layers[i].inputs.T, self.deltas[i]
+                )
+            elif self.layers[i + 1].activation == "sigmoid":
+                self.deltas[i] = np.dot(
+                    self.deltas[i + 1], self.weights[i + 1].T
+                ) * sigmoid_derivative(self.outputs[i])
+            elif self.layers[i + 1].activation == "softmax":
+                self.deltas[i] = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
+            # self.weights[i] -= self.lr * np.dot(self.layers[i].inputs.T, self.deltas[i])
+
+        print(self.weights[0])
+        # print(self.layers[1].inputs)
+        # print(self.weights[1])
+        # print(self.deltas[0])
         # print(self.layers[1].inputs)
         # print(self.outputs[-2])
         # print(np.array(self.outputs[-2]))

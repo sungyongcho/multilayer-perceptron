@@ -25,7 +25,6 @@ class Layer_Dense:
     # Backward pass
     def backward(self, dvalues):
         # Gradients on parameters
-        print(self.inputs)
         self.dweights = np.dot(self.inputs.T, dvalues)
         print(self.dweights)
         self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
@@ -245,9 +244,12 @@ dense2.backward(loss_activation.dinputs)
 activation1.backward(dense2.dinputs)
 dense1.backward(activation1.dinputs)
 
-
+# print(activation1.dinputs)
 # # Print gradients
-# print(dense1.weights - 0.1 * dense1.dweights)
+# print(dense2.weights)
+# print(dense2.dweights)
+# print(dense2.weights - 0.1 * dense2.dweights)
 # print(dense1.biases - 0.1 * dense1.dbiases)
+print("aa", dense1.weights - 0.1 * dense1.dweights)
 # print(dense2.dinputs)
 # print(dense2.biases - 0.1 * dense2.dbiases)
