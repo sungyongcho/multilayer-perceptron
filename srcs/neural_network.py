@@ -52,6 +52,23 @@ def softmax(x):
     return exp_x / np.sum(exp_x, axis=1, keepdims=True)
 
 
+# def softmax_real_deriv(x):
+#     # Create uninitialized array
+#     deriv = np.empty_like(x)
+
+#     # Enumerate outputs and gradients
+#     for index, (single_output, single_dvalues) in enumerate(zip(self.output, x)):
+#         # Flatten output array
+#         single_output = single_output.reshape(-1, 1)
+#         # Calculate Jacobian matrix of the output
+#         jacobian_matrix = np.diagflat(single_output) - np.dot(
+#             single_output, single_output.T
+#         )
+#         # Calculate sample-wise gradient
+#         # and add it to the array of sample gradients
+#         deriv[index] = np.dot(jacobian_matrix, single_dvalues)
+
+
 def softmax_derivative(y_pred, y_true):
     if len(y_true.shape) == 2:
         y_true = np.argmax(y_true, axis=1)
@@ -133,28 +150,25 @@ class NeuralNetwork:
         self._init_bias()
         return self.layers
 
-    def feedforward(self, row, epoch):
+    def feedforward(self, row):
         self.layers[0].inputs = row
         input_data = row
         self.data = []
-        print(epoch)
         for i in range(len(self.weights)):
-            self.layers[i + 1].inputs = np.dot(input_data, self.weights[i])
+            self.layers[i + 1].inputs = (
+                np.dot(input_data, self.weights[i]) + self.biases[i]
+            )
             if self.layers[i + 1].activation == "sigmoid":
                 # Calculate the weighted sum and apply the activation function
-                input_data = sigmoid(
-                    np.dot(input_data, self.weights[i]) + self.biases[i]
-                )
+                input_data = sigmoid(self.layers[i + 1].inputs)
             elif self.layers[i + 1].activation == "relu":
                 # Calculate the weighted sum and apply the activation function
-                # if epoch == 2:
-                #     print(self.biases[i])
-                input_data = relu(np.dot(input_data, self.weights[i]) + self.biases[i])
+                # if epoch == 1:
+                #     print(self.layers[i + 1].inputs + self.biases[i])
+                input_data = relu(self.layers[i + 1].inputs)
             elif self.layers[i + 1].activation == "softmax":
                 # Calculate the weighted sum and apply the activation function
-                input_data = softmax(
-                    np.dot(input_data, self.weights[i]) + self.biases[i]
-                )
+                input_data = softmax(self.layers[i + 1].inputs)
             self.outputs[i] = input_data
 
         return self.outputs[-1]
@@ -164,15 +178,12 @@ class NeuralNetwork:
 
         return self.outputs[-1]
 
-    def backpropagation(self, y_true, y_pred, epoch):
+    def backpropagation(self, y_true, y_pred):
         if self.layers[-1].activation == "softmax":
-            if epoch == 1:
-                print(y_pred)
             self.deltas[-1] = softmax_derivative(y_pred, y_true)
             di = np.dot(self.deltas[-1], self.weights[-1].T)
             self.weights[-1] -= self.lr * np.dot(self.outputs[0].T, self.deltas[-1])
             self.biases[-1] -= self.lr * np.sum(self.deltas[-1], axis=0, keepdims=True)
-            print(self.biases[-1])
         elif self.layers[-1].activation == "sigmoid":
             error = -(y_pred - self.outputs[-1])
             self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
@@ -193,7 +204,15 @@ class NeuralNetwork:
                     self.deltas[i + 1], self.weights[i + 1].T
                 ) * sigmoid_derivative(self.outputs[i])
             elif self.layers[i + 1].activation == "softmax":
-                self.deltas[i] = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
+                print("hi")
+                # self.deltas[i] = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
+                # di = np.dot(self.deltas[i], self.weights[i].T)
+                # self.weights[i] -= self.lr * np.dot(
+                #     self.layers[i].inputs.T, self.deltas[i]
+                # )
+                # self.biases[i] -= self.lr * np.sum(
+                #     self.deltas[i], axis=0, keepdims=True
+                # )
 
     def plot_graphs(self, train_loss_history, valid_loss_history):
         fig = plt.figure(figsize=(10, 5))
@@ -231,7 +250,7 @@ class NeuralNetwork:
         X_train = np.loadtxt("X_train.csv", delimiter=",")
 
         # Load y_train from the CSV file
-        y_train = np.loadtxt("y_train.csv", delimiter=",", dtype=int)
+        y_train = np.loadtxt("y_train.csv", delimiter=",").astype(np.int64)
         self.lr = learning_rate
         # if self.layers is None and layers is not None:
         #     self.__init__(layers)
@@ -241,12 +260,13 @@ class NeuralNetwork:
         for epoch in range(epochs):
             self.iamchecking = []
             train_epoch_loss = 0
-            y_pred = self.feedforward(X_train, epoch)
+            y_pred = self.feedforward(X_train)
             # self.iamchecking = np.squeeze(np.array(self.iamchecking))
             # print(self.iamchecking)
             loss = np.mean(crossentropy(y_train, y_pred))
-            # if epoch % 100 == 0:
-            print("{:.6f}".format(loss))
-            self.backpropagation(y_train, y_pred, epoch)
+            if epoch % 100 == 0:
+                # print("{:.6f}".format(loss))
+                print(loss)
+            self.backpropagation(y_train, y_pred)
             # for i in range(len(self.weights)):
             # print(np.array(self.weights[0]))

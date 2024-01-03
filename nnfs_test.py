@@ -422,7 +422,7 @@ class Activation_Softmax_Loss_CategoricalCrossentropy:
 X = np.loadtxt("X_train.csv", delimiter=",")
 
 # Load y_train from the CSV file
-y = np.loadtxt("y_train.csv", delimiter=",", dtype=int)
+y = np.loadtxt("y_train.csv", delimiter=",").astype(np.int64)
 
 # Create Dense layer with 2 input features and 64 output values
 dense1 = Layer_Dense(2, 64)
@@ -444,7 +444,7 @@ loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
 # Create optimizer
 optimizer = Optimizer_SGD(learning_rate=0.01)
 # Train in loop
-for epoch in range(3):
+for epoch in range(10001):
     # Perform a forward pass of our training data through this layer
     dense1.forward(X)
     # Perform a forward pass through activation function
@@ -465,19 +465,17 @@ for epoch in range(3):
     if len(y.shape) == 2:
         y = np.argmax(y, axis=1)
     accuracy = np.mean(predictions == y)
-    print(
-        f"epoch: {epoch}, "
-        + f"acc: {accuracy:.6f}, "
-        + f"loss: {loss}, "
-        + f"lr: {optimizer.current_learning_rate}"
-    )
+    if epoch % 100 == 0:
+        print(
+            f"epoch: {epoch}, "
+            + f"acc: {accuracy:.6f}, "
+            + f"loss: {loss}, "
+            + f"lr: {optimizer.current_learning_rate}"
+        )
 
     # Backward pass
     loss_activation.backward(loss_activation.output, y)
-    if epoch == 1:
-        print(loss_activation.output)
     dense2.backward(loss_activation.dinputs)
-    # print(loss_activation.dinputs)
     activation1.backward(dense2.dinputs)
     dense1.backward(activation1.dinputs)
 
