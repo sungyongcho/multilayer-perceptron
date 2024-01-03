@@ -1,7 +1,7 @@
 network = model.createNetwork([
 	layers.DenseLayer(input_shape, activation='sigmoid'),
-	layers.DenseLayer(3, activation='relu', weights_initializer='random'),
+	layers.DenseLayer(64, activation='relu', weights_initializer='random'),
 	layers.DenseLayer(output_shape, activation='softmax', weights_initializer='random')
 ])
 
-model.fit(network, data_train, data_valid, loss='binaryCrossentropy', learning_rate=0.1, batch_size=1, epochs=1)
+model.fit(network, data_train, data_valid, loss='binaryCrossentropy', learning_rate=0.01, batch_size=1, epochs=3)

@@ -17,9 +17,9 @@ import numpy as np
 
 import nnfs
 
-nnfs.init(42)
+# nnfs.init(42)
 
-np.random.seed(42)
+# np.random.seed(42)
 
 
 def sigmoid(x):
@@ -47,12 +47,14 @@ def relu_derivative(x, inputs):
 
 def softmax(x):
     exp_x = np.exp(
-        x - np.max(x, axis=-1, keepdims=True)
+        x - np.max(x, axis=1, keepdims=True)
     )  # Subtracting the maximum for numerical stability
-    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+    return exp_x / np.sum(exp_x, axis=1, keepdims=True)
 
 
 def softmax_derivative(y_pred, y_true):
+    if len(y_true.shape) == 2:
+        y_true = np.argmax(y_true, axis=1)
     y_pred[range(len(y_pred)), y_true] -= 1
     return y_pred / len(y_pred)
 
@@ -102,17 +104,6 @@ class NeuralNetwork:
         return f"{self.layers}" if self.layers is not None else None
 
     def _init_weights(self):
-        self.weights[0] = np.array(
-            [[0.35778737, 0.5607845, 1.0830512], [1.053802, -1.3776693, -0.937825]]
-        )
-        self.weights[1] = np.array(
-            [
-                [0.5150353, 0.51378596, 0.51504767],
-                [3.8527315, 0.5708905, 1.1355656],
-                [0.9540018, 0.65139127, -0.31526923],
-            ]
-        )
-
         # for i in range(len(self.layers) - 1):
         #     if self.layers[i + 1].weights_initializer == "random":
         #         self.weights[i] = np.random.randn(
@@ -126,18 +117,15 @@ class NeuralNetwork:
         #         self.weights[i] = heUniform(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
-        # self.weights[0][0][0] = 0.7
-        # self.weights[0][0][1] = 0.3
-        # self.weights[0][1][0] = 0.4
-        # self.weights[0][1][1] = 0.6
-
-        # self.weights[1][0][0] = 0.55
-        # self.weights[1][1][0] = 0.45
-        # print(self.weights[0])
+        self.weights[0] = np.loadtxt("weights1.csv", delimiter=",", dtype=np.float64)
+        self.weights[1] = np.loadtxt("weights2.csv", delimiter=",", dtype=np.float64)
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
-            self.biases[i - 1] = np.random.rand(1, self.layers[i].shape)
+            # if self.layers[i].weights_initializer == "random":
+            #     self.biases[i - 1] = np.random.rand(1, self.layers[i].shape)
+            # elif self.layers[i].weights_initializer == "zeros":
+            self.biases[i - 1] = np.zeros((1, self.layers[i].shape))
 
     def createNetwork(self, layers) -> Layers:
         self.__init__(layers)
@@ -145,10 +133,11 @@ class NeuralNetwork:
         self._init_bias()
         return self.layers
 
-    def feedforward(self, row):
+    def feedforward(self, row, epoch):
         self.layers[0].inputs = row
         input_data = row
         self.data = []
+        print(epoch)
         for i in range(len(self.weights)):
             self.layers[i + 1].inputs = np.dot(input_data, self.weights[i])
             if self.layers[i + 1].activation == "sigmoid":
@@ -158,27 +147,34 @@ class NeuralNetwork:
                 )
             elif self.layers[i + 1].activation == "relu":
                 # Calculate the weighted sum and apply the activation function
-                input_data = relu(np.dot(input_data, self.weights[i]))
+                # if epoch == 2:
+                #     print(self.biases[i])
+                input_data = relu(np.dot(input_data, self.weights[i]) + self.biases[i])
             elif self.layers[i + 1].activation == "softmax":
                 # Calculate the weighted sum and apply the activation function
-                self.iamchecking = softmax(np.dot(input_data, self.weights[i]))
                 input_data = softmax(
                     np.dot(input_data, self.weights[i]) + self.biases[i]
                 )
             self.outputs[i] = input_data
+
+        return self.outputs[-1]
 
     def predict(self, row):
         self.feedforward(row)
 
         return self.outputs[-1]
 
-    def backpropagation(self, target_row, y_true):
+    def backpropagation(self, y_true, y_pred, epoch):
         if self.layers[-1].activation == "softmax":
-            self.deltas[-1] = softmax_derivative(target_row, y_true)
+            if epoch == 1:
+                print(y_pred)
+            self.deltas[-1] = softmax_derivative(y_pred, y_true)
             di = np.dot(self.deltas[-1], self.weights[-1].T)
             self.weights[-1] -= self.lr * np.dot(self.outputs[0].T, self.deltas[-1])
+            self.biases[-1] -= self.lr * np.sum(self.deltas[-1], axis=0, keepdims=True)
+            print(self.biases[-1])
         elif self.layers[-1].activation == "sigmoid":
-            error = -(target_row - self.outputs[-1])
+            error = -(y_pred - self.outputs[-1])
             self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
 
         for i in reversed(range(len(self.weights) - 1)):
@@ -188,6 +184,10 @@ class NeuralNetwork:
                 self.weights[i] -= self.lr * np.dot(
                     self.layers[i].inputs.T, self.deltas[i]
                 )
+                self.biases[i] -= self.lr * np.sum(
+                    self.deltas[i], axis=0, keepdims=True
+                )
+                # print(self.biases[i])
             elif self.layers[i + 1].activation == "sigmoid":
                 self.deltas[i] = np.dot(
                     self.deltas[i + 1], self.weights[i + 1].T
@@ -233,16 +233,20 @@ class NeuralNetwork:
         # Load y_train from the CSV file
         y_train = np.loadtxt("y_train.csv", delimiter=",", dtype=int)
         self.lr = learning_rate
-        if self.layers is None and layers is not None:
-            self.__init__(layers)
+        # if self.layers is None and layers is not None:
+        #     self.__init__(layers)
 
         train_loss_history = []
         valid_loss_history = []
         for epoch in range(epochs):
             self.iamchecking = []
             train_epoch_loss = 0
-            self.feedforward(X_train)
-            self.iamchecking = np.squeeze(np.array(self.iamchecking))
-            loss = np.mean(crossentropy(y_train, self.iamchecking))
-            print(loss)
-            self.backpropagation(np.array(self.iamchecking), y_train)
+            y_pred = self.feedforward(X_train, epoch)
+            # self.iamchecking = np.squeeze(np.array(self.iamchecking))
+            # print(self.iamchecking)
+            loss = np.mean(crossentropy(y_train, y_pred))
+            # if epoch % 100 == 0:
+            print("{:.6f}".format(loss))
+            self.backpropagation(y_train, y_pred, epoch)
+            # for i in range(len(self.weights)):
+            # print(np.array(self.weights[0]))
