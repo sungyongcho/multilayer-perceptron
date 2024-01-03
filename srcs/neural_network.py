@@ -150,13 +150,11 @@ class NeuralNetwork:
         self._init_bias()
         return self.layers
 
-    def feedforward(self, row):
-        self.layers[0].inputs = row
-        input_data = row
-        self.data = []
+    def feedforward(self, x):
+        self.layers[0].inputs = x
         for i in range(len(self.weights)):
             self.layers[i + 1].inputs = (
-                np.dot(input_data if i == 0 else self.outputs[i - 1], self.weights[i])
+                np.dot(x if i == 0 else self.outputs[i - 1], self.weights[i])
                 + self.biases[i]
             )
             if self.layers[i + 1].activation == "sigmoid":
