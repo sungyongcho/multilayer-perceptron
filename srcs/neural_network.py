@@ -156,20 +156,17 @@ class NeuralNetwork:
         self.data = []
         for i in range(len(self.weights)):
             self.layers[i + 1].inputs = (
-                np.dot(input_data, self.weights[i]) + self.biases[i]
+                np.dot(input_data if i == 0 else self.outputs[i - 1], self.weights[i])
+                + self.biases[i]
             )
             if self.layers[i + 1].activation == "sigmoid":
-                # Calculate the weighted sum and apply the activation function
-                input_data = sigmoid(self.layers[i + 1].inputs)
+                self.outputs[i] = sigmoid(self.layers[i + 1].inputs)
             elif self.layers[i + 1].activation == "relu":
                 # Calculate the weighted sum and apply the activation function
-                # if epoch == 1:
-                #     print(self.layers[i + 1].inputs + self.biases[i])
-                input_data = relu(self.layers[i + 1].inputs)
+                self.outputs[i] = relu(self.layers[i + 1].inputs)
             elif self.layers[i + 1].activation == "softmax":
                 # Calculate the weighted sum and apply the activation function
-                input_data = softmax(self.layers[i + 1].inputs)
-            self.outputs[i] = input_data
+                self.outputs[i] = softmax(self.layers[i + 1].inputs)
 
         return self.outputs[-1]
 
@@ -198,21 +195,19 @@ class NeuralNetwork:
                 self.biases[i] -= self.lr * np.sum(
                     self.deltas[i], axis=0, keepdims=True
                 )
-                # print(self.biases[i])
             elif self.layers[i + 1].activation == "sigmoid":
                 self.deltas[i] = np.dot(
                     self.deltas[i + 1], self.weights[i + 1].T
                 ) * sigmoid_derivative(self.outputs[i])
             elif self.layers[i + 1].activation == "softmax":
-                print("hi")
-                # self.deltas[i] = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
-                # di = np.dot(self.deltas[i], self.weights[i].T)
-                # self.weights[i] -= self.lr * np.dot(
-                #     self.layers[i].inputs.T, self.deltas[i]
-                # )
-                # self.biases[i] -= self.lr * np.sum(
-                #     self.deltas[i], axis=0, keepdims=True
-                # )
+                self.deltas[i] = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
+                di = np.dot(self.deltas[i], self.weights[i].T)
+                self.weights[i] -= self.lr * np.dot(
+                    self.layers[i].inputs.T, self.deltas[i]
+                )
+                self.biases[i] -= self.lr * np.sum(
+                    self.deltas[i], axis=0, keepdims=True
+                )
 
     def plot_graphs(self, train_loss_history, valid_loss_history):
         fig = plt.figure(figsize=(10, 5))
@@ -252,8 +247,8 @@ class NeuralNetwork:
         # Load y_train from the CSV file
         y_train = np.loadtxt("y_train.csv", delimiter=",").astype(np.int64)
         self.lr = learning_rate
-        # if self.layers is None and layers is not None:
-        #     self.__init__(layers)
+        if self.layers is None and layers is not None:
+            self.__init__(layers)
 
         train_loss_history = []
         valid_loss_history = []
@@ -261,12 +256,7 @@ class NeuralNetwork:
             self.iamchecking = []
             train_epoch_loss = 0
             y_pred = self.feedforward(X_train)
-            # self.iamchecking = np.squeeze(np.array(self.iamchecking))
-            # print(self.iamchecking)
             loss = np.mean(crossentropy(y_train, y_pred))
             if epoch % 100 == 0:
-                # print("{:.6f}".format(loss))
                 print(loss)
             self.backpropagation(y_train, y_pred)
-            # for i in range(len(self.weights)):
-            # print(np.array(self.weights[0]))
