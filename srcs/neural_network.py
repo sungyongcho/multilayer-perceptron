@@ -111,6 +111,7 @@ class NeuralNetwork:
             self.deltas = [None] * (len(self.layers) - 1)
             self.biases = [None] * (len(self.layers) - 1)
             self.lr = None
+            self.optimizer = None
         else:
             self.layers = layers
 
@@ -236,14 +237,25 @@ class NeuralNetwork:
         return np.mean(predictions == y_true)
 
     def fit(
-        self, layers, data_train, data_valid, loss, learning_rate, batch_size, epochs
+        self,
+        layers,
+        data_train,
+        data_valid,
+        loss,
+        learning_rate,
+        batch_size,
+        epochs,
+        optimizer,
     ):
         # Load X_train from the CSV file
         X_train = np.loadtxt("X_train.csv", delimiter=",")
 
         # Load y_train from the CSV file
         y_train = np.loadtxt("y_train.csv", delimiter=",").astype(np.int64)
+
         self.lr = learning_rate
+        self.optimizer = optimizer
+
         if self.layers is None and layers is not None:
             self.__init__(layers)
 
@@ -254,6 +266,9 @@ class NeuralNetwork:
             train_epoch_loss = 0
             y_pred = self.feedforward(X_train)
             loss = np.mean(crossentropy(y_train, y_pred))
+            train_loss_history.append(loss)
+
+            acc = self.accuracy(y_train, y_pred)
             if epoch % 100 == 0:
-                print(loss)
+                print(loss, acc)
             self.backpropagation(y_train, y_pred)
