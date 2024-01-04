@@ -2,7 +2,7 @@ import numpy as np
 import nnfs
 from nnfs.datasets import spiral_data
 
-nnfs.init(42)
+# nnfs.init(42)
 
 np.random.seed(42)
 
@@ -612,6 +612,7 @@ for epoch in range(10001):
 
     # Calculate the data loss
     data_loss = loss_function.calculate(activation2.output, y)
+    print(data_loss)
     # Calculate regularization penalty
     regularization_loss = loss_function.regularization_loss(
         dense1
@@ -630,8 +631,8 @@ for epoch in range(10001):
     if not epoch % 100:
         print(
             f"epoch: {epoch}, "
-            + f"acc: {accuracy:.3f}, "
-            + f"loss: {loss:.3f} ("
+            + f"acc: {accuracy}, "
+            + f"loss: {loss} ("
             + f"data_loss: {data_loss:.3f}, "
             + f"reg_loss: {regularization_loss:.3f}), "
             + f"lr: {optimizer.current_learning_rate}"

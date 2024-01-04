@@ -17,7 +17,7 @@ import numpy as np
 
 # nnfs.init(42)
 
-# np.random.seed(42)
+np.random.seed(42)
 
 
 def sigmoid(x):
@@ -100,6 +100,19 @@ def crossentropy(y_true, y_pred):
     negative_log_likelihoods = -np.log(correct_confidences)
 
     return negative_log_likelihoods
+
+
+def binary_crossentropy(y_true, y_pred):
+    y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+
+    # Calculate sample-wise loss
+    sample_losses = -(
+        y_true * np.log(y_pred_clipped) + (1 - y_true) * np.log(1 - y_pred_clipped)
+    )
+    sample_losses = np.mean(sample_losses, axis=-1)
+
+    # Return losses
+    return sample_losses
 
 
 class NeuralNetwork:
@@ -242,6 +255,10 @@ class NeuralNetwork:
             y_true = np.argmax(y_true, axis=1)
         return np.mean(predictions == y_true)
 
+    def accuracy_binary(self, y_true, y_pred):
+        predictions = (y_pred > 0.5) * 1
+        return np.mean(predictions == y_true)
+
     def fit(
         self,
         layers,
@@ -271,10 +288,9 @@ class NeuralNetwork:
             self.iamchecking = []
             train_epoch_loss = 0
             y_pred = self.feedforward(X_train)
-            loss = np.mean(crossentropy(y_train, y_pred))
+            loss = np.mean(binary_crossentropy(y_train, y_pred))
             train_loss_history.append(loss)
-
-            acc = self.accuracy(y_train, y_pred)
+            acc = self.accuracy_binary(y_train, y_pred)
             if epoch % 100 == 0:
-                print(loss, acc)
+                print("loss:", loss, "accuracy:,", acc)
             self.backpropagation(y_train, y_pred)
