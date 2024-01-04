@@ -178,35 +178,35 @@ class Optimizer_SGD:
     # Update parameters
     def update_params(self, layer):
         # If we use momentum
-        if self.momentum:
-            # If layer does not contain momentum arrays, create them
-            # filled with zeros
-            if not hasattr(layer, "weight_momentums"):
-                layer.weight_momentums = np.zeros_like(layer.weights)
-                # If there is no momentum array for weights
-                # The array doesn't exist for biases yet either.
-                layer.bias_momentums = np.zeros_like(layer.biases)
+        # if self.momentum:
+        #     # If layer does not contain momentum arrays, create them
+        #     # filled with zeros
+        #     if not hasattr(layer, "weight_momentums"):
+        #         layer.weight_momentums = np.zeros_like(layer.weights)
+        #         # If there is no momentum array for weights
+        #         # The array doesn't exist for biases yet either.
+        #         layer.bias_momentums = np.zeros_like(layer.biases)
 
-            # Build weight updates with momentum - take previous
-            # updates multiplied by retain factor and update with
-            # current gradients
-            weight_updates = (
-                self.momentum * layer.weight_momentums
-                - self.current_learning_rate * layer.dweights
-            )
-            layer.weight_momentums = weight_updates
+        #     # Build weight updates with momentum - take previous
+        #     # updates multiplied by retain factor and update with
+        #     # current gradients
+        #     weight_updates = (
+        #         self.momentum * layer.weight_momentums
+        #         - self.current_learning_rate * layer.dweights
+        #     )
+        #     layer.weight_momentums = weight_updates
 
-            # Build bias updates
-            bias_updates = (
-                self.momentum * layer.bias_momentums
-                - self.current_learning_rate * layer.dbiases
-            )
-            layer.bias_momentums = bias_updates
+        #     # Build bias updates
+        #     bias_updates = (
+        #         self.momentum * layer.bias_momentums
+        #         - self.current_learning_rate * layer.dbiases
+        #     )
+        #     layer.bias_momentums = bias_updates
 
-        # Vanilla SGD updates (as before momentum update)
-        else:
-            weight_updates = -self.current_learning_rate * layer.dweights
-            bias_updates = -self.current_learning_rate * layer.dbiases
+        # # Vanilla SGD updates (as before momentum update)
+        # else:
+        weight_updates = -self.current_learning_rate * layer.dweights
+        bias_updates = -self.current_learning_rate * layer.dbiases
 
         # Update weights and biases using either
         # vanilla or momentum updates
@@ -568,7 +568,7 @@ X = np.loadtxt("X_train_bin.csv", delimiter=",")
 y = np.loadtxt("y_train_bin.csv", delimiter=",").reshape(-1, 1)
 
 # Create Dense layer with 2 input features and 64 output values
-dense1 = Layer_Dense(2, 64, weight_regularizer_l2=5e-4, bias_regularizer_l2=5e-4)
+dense1 = Layer_Dense(2, 64)
 # Create ReLU activation (to be used with Dense layer):
 activation1 = Activation_ReLU()
 
@@ -590,7 +590,7 @@ activation2 = Activation_Sigmoid()
 loss_function = Loss_BinaryCrossentropy()
 
 # Create optimizer
-optimizer = Optimizer_Adam(decay=5e-7)
+optimizer = Optimizer_SGD(learning_rate=0.01)
 
 # Train in loop
 for epoch in range(10001):

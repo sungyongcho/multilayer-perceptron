@@ -24,8 +24,8 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def sigmoid_derivative(x):
-    return x * (1 - x)
+def sigmoid_derivative(y_pred, y_true):
+    return y_pred * (1 - y_true) * y_true
 
 
 def heUniform(shape):
@@ -133,8 +133,12 @@ class NeuralNetwork:
         #         self.weights[i] = heUniform(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
-        self.weights[0] = np.loadtxt("weights1.csv", delimiter=",", dtype=np.float64)
-        self.weights[1] = np.loadtxt("weights2.csv", delimiter=",", dtype=np.float64)
+        self.weights[0] = np.loadtxt(
+            "weights1_bin.csv", delimiter=",", dtype=np.float64
+        )
+        self.weights[1] = np.loadtxt(
+            "weights2_bin.csv", delimiter=",", dtype=np.float64
+        ).reshape(-1, 1)
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
@@ -176,7 +180,9 @@ class NeuralNetwork:
             self.deltas[-1] = softmax_derivative(y_pred, y_true)
             di = np.dot(self.deltas[-1], self.weights[-1].T)
         elif self.layers[-1].activation == "sigmoid":
-            pass
+            self.deltas[-1] = sigmoid_derivative(y_pred, y_true)
+            di = np.dot(self.deltas[-1], self.weights[-1].T)
+            # pass
         # error = -(y_pred - self.outputs[-1])
         # self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
 
@@ -248,10 +254,10 @@ class NeuralNetwork:
         optimizer,
     ):
         # Load X_train from the CSV file
-        X_train = np.loadtxt("X_train.csv", delimiter=",")
+        X_train = np.loadtxt("X_train_bin.csv", delimiter=",")
 
         # Load y_train from the CSV file
-        y_train = np.loadtxt("y_train.csv", delimiter=",").astype(np.int64)
+        y_train = np.loadtxt("y_train_bin.csv", delimiter=",").reshape(-1, 1)
 
         self.lr = learning_rate
         self.optimizer = optimizer
