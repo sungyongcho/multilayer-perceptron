@@ -25,7 +25,13 @@ def sigmoid(x):
 
 
 def sigmoid_derivative(y_pred, y_true):
-    return y_pred * (1 - y_true) * y_true
+    samples = len(y_pred)
+    outputs = len(y_pred[0])
+
+    clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+
+    output = -(y_true / clipped - (1 - y_true) / (1 - clipped)) / outputs
+    return output / samples
 
 
 def heUniform(shape):
@@ -48,23 +54,6 @@ def softmax(x):
         x - np.max(x, axis=1, keepdims=True)
     )  # Subtracting the maximum for numerical stability
     return exp_x / np.sum(exp_x, axis=1, keepdims=True)
-
-
-# def softmax_real_deriv(x):
-#     # Create uninitialized array
-#     deriv = np.empty_like(x)
-
-#     # Enumerate outputs and gradients
-#     for index, (single_output, single_dvalues) in enumerate(zip(self.output, x)):
-#         # Flatten output array
-#         single_output = single_output.reshape(-1, 1)
-#         # Calculate Jacobian matrix of the output
-#         jacobian_matrix = np.diagflat(single_output) - np.dot(
-#             single_output, single_output.T
-#         )
-#         # Calculate sample-wise gradient
-#         # and add it to the array of sample gradients
-#         deriv[index] = np.dot(jacobian_matrix, single_dvalues)
 
 
 def softmax_derivative(y_pred, y_true):
@@ -194,7 +183,10 @@ class NeuralNetwork:
             di = np.dot(self.deltas[-1], self.weights[-1].T)
         elif self.layers[-1].activation == "sigmoid":
             self.deltas[-1] = sigmoid_derivative(y_pred, y_true)
+            self.deltas[-1] = self.deltas[-1] * (1 - y_pred) * y_pred
             di = np.dot(self.deltas[-1], self.weights[-1].T)
+
+            # di = self.deltas[-1] * (1 - y_pred) * y_pred
             # pass
         # error = -(y_pred - self.outputs[-1])
         # self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
@@ -209,7 +201,7 @@ class NeuralNetwork:
                 #     self.deltas[i + 1], self.weights[i + 1].T
                 # ) * sigmoid_derivative(self.outputs[i])
             elif self.layers[i + 1].activation == "softmax":
-                self.deltas[i] = softmax_derivative(di, self.layers[i + 1])
+                self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
 
             di = np.dot(self.deltas[i], self.weights[i].T)
 

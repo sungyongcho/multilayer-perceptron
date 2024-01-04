@@ -593,7 +593,7 @@ loss_function = Loss_BinaryCrossentropy()
 optimizer = Optimizer_SGD(learning_rate=0.01)
 
 # Train in loop
-for epoch in range(10001):
+for epoch in range(300):
     # Perform a forward pass of our training data through this layer
     dense1.forward(X)
 
@@ -612,7 +612,6 @@ for epoch in range(10001):
 
     # Calculate the data loss
     data_loss = loss_function.calculate(activation2.output, y)
-    print(data_loss)
     # Calculate regularization penalty
     regularization_loss = loss_function.regularization_loss(
         dense1
