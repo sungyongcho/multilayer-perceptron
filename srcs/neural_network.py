@@ -12,10 +12,8 @@ from srcs.utils import (
 )
 
 
-from nnfs.datasets import spiral_data
 import numpy as np
 
-import nnfs
 
 # nnfs.init(42)
 
@@ -40,9 +38,9 @@ def relu(x):
     return np.maximum(0, x)
 
 
-def relu_derivative(x, inputs):
-    x[inputs <= 0] = 0
-    return x
+def relu_derivative(y_pred, y_true):
+    y_pred[y_true <= 0] = 0
+    return y_pred
 
 
 def softmax(x):
@@ -160,10 +158,8 @@ class NeuralNetwork:
             if self.layers[i + 1].activation == "sigmoid":
                 self.outputs[i] = sigmoid(self.layers[i + 1].inputs)
             elif self.layers[i + 1].activation == "relu":
-                # Calculate the weighted sum and apply the activation function
                 self.outputs[i] = relu(self.layers[i + 1].inputs)
             elif self.layers[i + 1].activation == "softmax":
-                # Calculate the weighted sum and apply the activation function
                 self.outputs[i] = softmax(self.layers[i + 1].inputs)
 
         return self.outputs[-1]
@@ -174,38 +170,41 @@ class NeuralNetwork:
         return self.outputs[-1]
 
     def backpropagation(self, y_true, y_pred):
+        # for first index output only
         if self.layers[-1].activation == "softmax":
             self.deltas[-1] = softmax_derivative(y_pred, y_true)
             di = np.dot(self.deltas[-1], self.weights[-1].T)
-            self.weights[-1] -= self.lr * np.dot(self.outputs[0].T, self.deltas[-1])
-            self.biases[-1] -= self.lr * np.sum(self.deltas[-1], axis=0, keepdims=True)
         elif self.layers[-1].activation == "sigmoid":
-            error = -(y_pred - self.outputs[-1])
-            self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
+            pass
+        # error = -(y_pred - self.outputs[-1])
+        # self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
 
+        # update gradients (delta)
         for i in reversed(range(len(self.weights) - 1)):
             if self.layers[i + 1].activation == "relu":
                 self.deltas[i] = relu_derivative(di, self.layers[i + 1].inputs)
-                di = np.dot(self.deltas[i], self.weights[i].T)
-                self.weights[i] -= self.lr * np.dot(
-                    self.layers[i].inputs.T, self.deltas[i]
-                )
-                self.biases[i] -= self.lr * np.sum(
-                    self.deltas[i], axis=0, keepdims=True
-                )
             elif self.layers[i + 1].activation == "sigmoid":
-                self.deltas[i] = np.dot(
-                    self.deltas[i + 1], self.weights[i + 1].T
-                ) * sigmoid_derivative(self.outputs[i])
+                pass
+                # self.deltas[i] = np.dot(
+                #     self.deltas[i + 1], self.weights[i + 1].T
+                # ) * sigmoid_derivative(self.outputs[i])
             elif self.layers[i + 1].activation == "softmax":
-                self.deltas[i] = np.dot(self.deltas[i + 1], self.weights[i + 1].T)
-                di = np.dot(self.deltas[i], self.weights[i].T)
-                self.weights[i] -= self.lr * np.dot(
-                    self.layers[i].inputs.T, self.deltas[i]
-                )
-                self.biases[i] -= self.lr * np.sum(
-                    self.deltas[i], axis=0, keepdims=True
-                )
+                self.deltas[i] = softmax_derivative(di, self.layers[i + 1])
+
+            di = np.dot(self.deltas[i], self.weights[i].T)
+
+        # update weights and biases
+        for i in reversed(range(len(self.weights))):
+            self.weights[i] -= self.lr * np.dot(
+                (
+                    self.outputs[i - 1].T
+                    if i == len(self.weights) - 1
+                    else self.layers[i].inputs.T
+                ),
+                self.deltas[i],
+            )
+
+            self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0, keepdims=True)
 
     def plot_graphs(self, train_loss_history, valid_loss_history):
         fig = plt.figure(figsize=(10, 5))
