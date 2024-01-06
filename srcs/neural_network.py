@@ -24,7 +24,16 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def sigmoid_derivative(y_pred, y_true):
+def updated_binary_cross_entropy_loss(y_pred, y_true):
+    y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+    sample_losses = -(
+        y_true * np.log(y_pred_clipped) + (1 - y_true) * np.log(1 - y_pred_clipped)
+    )
+    sample_losses = np.mean(sample_losses, axis=-1)
+    return sample_losses
+
+
+def binary_crossentropy_deriv(y_pred, y_true):
     samples = len(y_pred)
     outputs = len(y_pred[0])
 
@@ -32,6 +41,10 @@ def sigmoid_derivative(y_pred, y_true):
 
     output = -(y_true / clipped - (1 - y_true) / (1 - clipped)) / outputs
     return output / samples
+
+
+def sigmoid_deriv(y_pred):
+    return (1 - y_pred) * y_pred
 
 
 def heUniform(shape):
@@ -56,7 +69,7 @@ def softmax(x):
     return exp_x / np.sum(exp_x, axis=1, keepdims=True)
 
 
-def softmax_derivative(y_pred, y_true):
+def categorical_crossentropy_deriv(y_pred, y_true):
     if len(y_true.shape) == 2:
         y_true = np.argmax(y_true, axis=1)
     y_pred[range(len(y_pred)), y_true] -= 1
@@ -98,7 +111,6 @@ def binary_crossentropy(y_true, y_pred):
     sample_losses = -(
         y_true * np.log(y_pred_clipped) + (1 - y_true) * np.log(1 - y_pred_clipped)
     )
-    sample_losses = np.mean(sample_losses, axis=-1)
 
     # Return losses
     return sample_losses
@@ -176,20 +188,15 @@ class NeuralNetwork:
 
         return self.outputs[-1]
 
-    def backpropagation(self, y_true, y_pred):
+    def backpropagation(self, y_true, y_pred, loss):
         # for first index output only
-        if self.layers[-1].activation == "softmax":
-            self.deltas[-1] = softmax_derivative(y_pred, y_true)
-            di = np.dot(self.deltas[-1], self.weights[-1].T)
-        elif self.layers[-1].activation == "sigmoid":
-            self.deltas[-1] = sigmoid_derivative(y_pred, y_true)
-            self.deltas[-1] = self.deltas[-1] * (1 - y_pred) * y_pred
-            di = np.dot(self.deltas[-1], self.weights[-1].T)
+        if self.loss == "classCrossentropy":
+            self.deltas[-1] = categorical_crossentropy_deriv(y_pred, y_true)
+        elif self.loss == "binaryCrossentropy":
+            output_gradient = binary_crossentropy_deriv(y_pred, y_true)
+            self.deltas[-1] = output_gradient * sigmoid_deriv(y_pred)
 
-            # di = self.deltas[-1] * (1 - y_pred) * y_pred
-            # pass
-        # error = -(y_pred - self.outputs[-1])
-        # self.deltas[-1] = error * sigmoid_derivative(self.outputs[-1])
+        di = np.dot(self.deltas[-1], self.weights[-1].T)
 
         # update gradients (delta)
         for i in reversed(range(len(self.weights) - 1)):
@@ -201,7 +208,8 @@ class NeuralNetwork:
                 #     self.deltas[i + 1], self.weights[i + 1].T
                 # ) * sigmoid_derivative(self.outputs[i])
             elif self.layers[i + 1].activation == "softmax":
-                self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
+                pass
+                # self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
 
             di = np.dot(self.deltas[i], self.weights[i].T)
 
@@ -269,6 +277,7 @@ class NeuralNetwork:
         y_train = np.loadtxt("y_train_bin.csv", delimiter=",").reshape(-1, 1)
 
         self.lr = learning_rate
+        self.loss = loss
         self.optimizer = optimizer
 
         if self.layers is None and layers is not None:
@@ -285,4 +294,4 @@ class NeuralNetwork:
             acc = self.accuracy_binary(y_train, y_pred)
             if epoch % 100 == 0:
                 print("loss:", loss, "accuracy:,", acc)
-            self.backpropagation(y_train, y_pred)
+            self.backpropagation(y_train, y_pred, loss)
