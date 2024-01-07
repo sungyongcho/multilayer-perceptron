@@ -17,7 +17,7 @@ import numpy as np
 
 # nnfs.init(42)
 
-np.random.seed(42)
+# np.random.seed(42)
 
 
 def sigmoid(x):
@@ -77,9 +77,7 @@ def categorical_crossentropy_deriv(y_pred, y_true):
 
 
 def crossentropy(y_true, y_pred):
-    y_true = y_true.astype(int)
-
-    # print(y_pred, y_true)
+    # y_true = y_true.astype(int)
 
     samples = len(y_pred)
 
@@ -148,11 +146,11 @@ class NeuralNetwork:
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
         self.weights[0] = np.loadtxt(
-            "weights1_bin.csv", delimiter=",", dtype=np.float64
+            "weights1_18.csv", delimiter=",", dtype=np.float64
         )
         self.weights[1] = np.loadtxt(
-            "weights2_bin.csv", delimiter=",", dtype=np.float64
-        ).reshape(-1, 1)
+            "weights2_18.csv", delimiter=",", dtype=np.float64
+        )
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
@@ -177,7 +175,9 @@ class NeuralNetwork:
             if self.layers[i + 1].activation == "sigmoid":
                 self.outputs[i] = sigmoid(self.layers[i + 1].inputs)
             elif self.layers[i + 1].activation == "relu":
+                # print(self.layers[i + 1].inputs)
                 self.outputs[i] = relu(self.layers[i + 1].inputs)
+                # print(self.outputs[i])
             elif self.layers[i + 1].activation == "softmax":
                 self.outputs[i] = softmax(self.layers[i + 1].inputs)
 
@@ -271,10 +271,13 @@ class NeuralNetwork:
         optimizer,
     ):
         # Load X_train from the CSV file
-        X_train = np.loadtxt("X_train_bin.csv", delimiter=",")
+        X_train = np.loadtxt("X_train_18.csv", delimiter=",")
 
         # Load y_train from the CSV file
-        y_train = np.loadtxt("y_train_bin.csv", delimiter=",").reshape(-1, 1)
+        y_train = np.loadtxt("y_train_18.csv", delimiter=",").astype(int)
+
+        data_valid = True
+
 
         self.lr = learning_rate
         self.loss = loss
@@ -289,9 +292,21 @@ class NeuralNetwork:
             self.iamchecking = []
             train_epoch_loss = 0
             y_pred = self.feedforward(X_train)
-            loss = np.mean(binary_crossentropy(y_train, y_pred))
+            loss = np.mean(crossentropy(y_train, y_pred))
             train_loss_history.append(loss)
-            acc = self.accuracy_binary(y_train, y_pred)
-            if epoch % 100 == 0:
+            acc = self.accuracy(y_train, y_pred)
+            if not epoch % 100:
                 print("loss:", loss, "accuracy:,", acc)
             self.backpropagation(y_train, y_pred, loss)
+
+        if data_valid:
+            X_test = np.loadtxt("X_test_18.csv", delimiter=",")
+            y_test = np.loadtxt("y_test_18.csv", delimiter=",").astype(int)
+
+            # TODO: change to validation data
+
+            y_pred_valid = self.feedforward(X_test)
+            val_loss = np.mean(crossentropy(y_test, y_pred_valid))
+            print(y_pred_valid)
+            acc = self.accuracy(y_test, y_pred_valid)
+            print("validation, ", "accuracy: ", acc, "loss: ", val_loss)

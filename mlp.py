@@ -53,7 +53,7 @@ if __name__ == "__main__":
         layers = Layers()
 
         input_shape = 2
-        output_shape = 1
+        output_shape = 3
         model, network = execute_code_from_file(args.source)
         # print(model.outputs[-1])
         # print("after", model.outputs)
