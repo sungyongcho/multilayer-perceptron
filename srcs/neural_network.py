@@ -145,12 +145,8 @@ class NeuralNetwork:
         #         self.weights[i] = heUniform(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
-        self.weights[0] = np.loadtxt(
-            "weights1_18.csv", delimiter=",", dtype=np.float64
-        )
-        self.weights[1] = np.loadtxt(
-            "weights2_18.csv", delimiter=",", dtype=np.float64
-        )
+        self.weights[0] = np.loadtxt("weights1_18.csv", delimiter=",", dtype=np.float64)
+        self.weights[1] = np.loadtxt("weights2_18.csv", delimiter=",", dtype=np.float64)
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
@@ -277,7 +273,6 @@ class NeuralNetwork:
         y_train = np.loadtxt("y_train_18.csv", delimiter=",").astype(int)
 
         data_valid = True
-
 
         self.lr = learning_rate
         self.loss = loss
