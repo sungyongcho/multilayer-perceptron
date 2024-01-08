@@ -145,8 +145,15 @@ class NeuralNetwork:
         #         self.weights[i] = heUniform(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
-        self.weights[0] = np.loadtxt("weights1_18.csv", delimiter=",", dtype=np.float64)
-        self.weights[1] = np.loadtxt("weights2_18.csv", delimiter=",", dtype=np.float64)
+        self.weights[0] = np.loadtxt(
+            "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
+        )
+        self.weights[1] = np.loadtxt(
+            "./nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
+        )
+        self.weights[2] = np.loadtxt(
+            "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
+        )
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
@@ -246,6 +253,7 @@ class NeuralNetwork:
         return np.mean((y_true - y_pred) ** 2)
 
     def accuracy(self, y_true, y_pred):
+        # NEED TO CHECK
         predictions = np.argmax(y_pred, axis=1)
         if len(y_true.shape) == 2:
             y_true = np.argmax(y_true, axis=1)
@@ -267,10 +275,10 @@ class NeuralNetwork:
         optimizer,
     ):
         # Load X_train from the CSV file
-        X_train = np.loadtxt("X_train_18.csv", delimiter=",")
+        X_train = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
 
         # Load y_train from the CSV file
-        y_train = np.loadtxt("y_train_18.csv", delimiter=",").astype(int)
+        y_train = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
 
         data_valid = True
 
@@ -284,24 +292,31 @@ class NeuralNetwork:
         train_loss_history = []
         valid_loss_history = []
         for epoch in range(epochs):
-            self.iamchecking = []
+            print("epoch:", epoch + 1)
             train_epoch_loss = 0
             y_pred = self.feedforward(X_train)
             loss = np.mean(crossentropy(y_train, y_pred))
             train_loss_history.append(loss)
             acc = self.accuracy(y_train, y_pred)
-            if not epoch % 100:
-                print("loss:", loss, "accuracy:,", acc)
+            # if not epoch % 100:
+            print(
+                "training,",
+                "accuracy:,",
+                acc,
+                "loss:",
+                loss,
+            )
             self.backpropagation(y_train, y_pred, loss)
 
-        if data_valid:
-            X_test = np.loadtxt("X_test_18.csv", delimiter=",")
-            y_test = np.loadtxt("y_test_18.csv", delimiter=",").astype(int)
+            if data_valid:
+                X_test = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
+                y_test = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(
+                    int
+                )
 
-            # TODO: change to validation data
+                # TODO: change to validation data
 
-            y_pred_valid = self.feedforward(X_test)
-            val_loss = np.mean(crossentropy(y_test, y_pred_valid))
-            print(y_pred_valid)
-            acc = self.accuracy(y_test, y_pred_valid)
-            print("validation, ", "accuracy: ", acc, "loss: ", val_loss)
+                y_pred_valid = self.feedforward(X_test)
+                val_loss = np.mean(crossentropy(y_test, y_pred_valid))
+                acc = self.accuracy(y_test, y_pred_valid)
+                print("validation,", "accuracy:", acc, "loss:", val_loss)
