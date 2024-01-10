@@ -145,22 +145,22 @@ class NeuralNetwork:
         #         self.weights[i] = heUniform(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
-        self.weights[0] = np.loadtxt(
+        self.layers[1].weights = np.loadtxt(
             "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
         )
-        self.weights[1] = np.loadtxt(
+        self.layers[2].weights = np.loadtxt(
             "./nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
         )
-        self.weights[2] = np.loadtxt(
+        self.layers[3].weights = np.loadtxt(
             "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
         )
 
     def _init_bias(self):
         for i in range(1, len(self.layers)):
             # if self.layers[i].weights_initializer == "random":
-            #     self.biases[i - 1] = np.random.rand(1, self.layers[i].shape)
+            #     self.layers[i].biases = np.random.rand(1, self.layers[i].shape)
             # elif self.layers[i].weights_initializer == "zeros":
-            self.biases[i - 1] = np.zeros((1, self.layers[i].shape))
+            self.layers[i].biases = np.zeros((1, self.layers[i].shape))
 
     def createNetwork(self, layers) -> Layers:
         self.__init__(layers)
@@ -169,22 +169,26 @@ class NeuralNetwork:
         return self.layers
 
     def feedforward(self, x):
-        self.layers[0].inputs = x
-        for i in range(len(self.weights)):
-            self.layers[i + 1].inputs = (
-                np.dot(x if i == 0 else self.outputs[i - 1], self.weights[i])
-                + self.biases[i]
+        # self.layers[0].inputs = x
+        self.layers[0].outputs = x
+        for i in range(1, len(self.layers)):
+            self.layers[i].inputs = (
+                np.dot(
+                    self.layers[i - 1].outputs,
+                    self.layers[i].weights,
+                )
+                + self.layers[i].biases
             )
-            if self.layers[i + 1].activation == "sigmoid":
-                self.outputs[i] = sigmoid(self.layers[i + 1].inputs)
-            elif self.layers[i + 1].activation == "relu":
+            if self.layers[i].activation == "sigmoid":
+                self.layers[i].outputs = sigmoid(self.layers[i].inputs)
+            elif self.layers[i].activation == "relu":
                 # print(self.layers[i + 1].inputs)
-                self.outputs[i] = relu(self.layers[i + 1].inputs)
+                self.layers[i].outputs = relu(self.layers[i].inputs)
                 # print(self.outputs[i])
-            elif self.layers[i + 1].activation == "softmax":
-                self.outputs[i] = softmax(self.layers[i + 1].inputs)
+            elif self.layers[i].activation == "softmax":
+                self.layers[i].outputs = softmax(self.layers[i].inputs)
 
-        return self.outputs[-1]
+        return self.layers[-1].outputs
 
     def predict(self, row):
         self.feedforward(row)
@@ -309,7 +313,7 @@ class NeuralNetwork:
             accuracy = np.mean(batch_compare)
             total_accuracy += np.sum(batch_compare)
 
-            if is_training and (not step % 100 or step == steps - 1):
+            if not step % 100 or step == steps - 1:
                 print(f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}")
 
             if is_training:
@@ -373,26 +377,26 @@ class NeuralNetwork:
         for epoch in range(epochs):
             print(f"Epoch: {epoch + 1}")
             train_loss, train_accuracy = self.process_data(
-                X_train, y_train, train_steps, batch_size, is_training=True
+                X_train, y_train, train_steps, batch_size, is_training=False
             )
             train_loss_history.append(train_loss)
             train_accuracy_history.append(train_accuracy)
             print(f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}")
 
-            if X_valid is not None and y_valid is not None:
-                valid_loss, valid_accuracy = self.process_data(
-                    X_valid, y_valid, validation_steps, batch_size, is_training=False
-                )
-                valid_loss_history.append(valid_loss)
-                valid_accuracy_history.append(valid_accuracy)
-                print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
-        if plot == True:
-            self.plot_graphs(
-                train_loss_history,
-                valid_loss_history,
-                train_accuracy_history,
-                valid_accuracy_history,
-            )
+        #     if X_valid is not None and y_valid is not None:
+        #         valid_loss, valid_accuracy = self.process_data(
+        #             X_valid, y_valid, validation_steps, batch_size, is_training=False
+        #         )
+        #         valid_loss_history.append(valid_loss)
+        #         valid_accuracy_history.append(valid_accuracy)
+        #         print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
+        # if plot == True:
+        #     self.plot_graphs(
+        #         train_loss_history,
+        #         valid_loss_history,
+        #         train_accuracy_history,
+        #         valid_accuracy_history,
+        #     )
 
 
 ## TODO (2023-01-13 18:26)
