@@ -5,4 +5,4 @@ network = model.createNetwork([
 	layers.DenseLayer(output_shape, activation='softmax', weights_initializer='random')
 ])
 
-model.fit(network, data_train, data_valid, loss='classCrossentropy', learning_rate=0.01, batch_size=1, epochs=10, optimizer="sgd")
+model.fit(network, data_train, data_valid, loss='classCrossentropy', learning_rate=0.01, batch_size=128, epochs=5, optimizer="sgd")

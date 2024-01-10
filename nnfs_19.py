@@ -856,6 +856,8 @@ class Model:
             self.loss.new_pass()
             self.accuracy.new_pass()
 
+            batch_loss_history = []
+
             # Iterate over steps
             for step in range(train_steps):
                 # If batch size is not set -
@@ -878,6 +880,8 @@ class Model:
                 )
                 loss = data_loss + regularization_loss
 
+                batch_loss_history.append(loss)
+
                 # Get predictions and calculate an accuracy
                 predictions = self.output_layer_activation.predictions(output)
                 accuracy = self.accuracy.calculate(predictions, batch_y)
@@ -892,15 +896,15 @@ class Model:
                 self.optimizer.post_update_params()
 
                 # # Print a summary
-                # if not step % print_every or step == train_steps - 1:
-                #     print(
-                #         f"step: {step}, "
-                #         + f"acc: {accuracy:.3f}, "
-                #         + f"loss: {loss:.3f} ("
-                #         + f"data_loss: {data_loss:.3f}, "
-                #         + f"reg_loss: {regularization_loss:.3f}), "
-                #         + f"lr: {self.optimizer.current_learning_rate}"
-                #     )
+                if not step % print_every or step == train_steps - 1:
+                    print(
+                        f"step: {step}, "
+                        + f"acc: {accuracy:.3f}, "
+                        + f"loss: {loss:.3f} ("
+                        + f"data_loss: {data_loss:.3f}, "
+                        + f"reg_loss: {regularization_loss:.3f}), "
+                        + f"lr: {self.optimizer.current_learning_rate}"
+                    )
 
             # Get and print epoch loss and accuracy
             (
@@ -1077,7 +1081,7 @@ def create_data_mnist(path):
 # np.savetxt("./nnfs_data/y_train_19.csv", y, delimiter=",")
 
 # np.savetxt("./nnfs_data/X_test_19.csv", X_test, delimiter=",")
-# np.savetxt("./nnfs_data/y_test_19.csv", y_test, delimiter=",").astype(int)
+# np.savetxt("./nnfs_data/y_test_19.csv", y_test, delimiter=",")
 
 
 X = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
@@ -1118,4 +1122,6 @@ for layer in model.layers:
         i += 1
 
 # Train the model
-model.train(X, y, validation_data=(X_test, y_test), epochs=10, print_every=100)
+model.train(
+    X, y, validation_data=(X_test, y_test), epochs=5, batch_size=128, print_every=100
+)
