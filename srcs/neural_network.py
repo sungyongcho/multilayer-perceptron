@@ -218,16 +218,17 @@ class NeuralNetwork:
 
         # update weights and biases
         for i in reversed(range(len(self.weights))):
-            optimizer = Optimizer_SGD(learning_rate=self.lr)
-            optimizer.pre_update_params()
+            ## here here here
+            self.optimizer_class.pre_update_params()
             layer = self.layers[i + 1]
             layer.dweights = np.dot(
                 (self.outputs[i - 1].T if i > 0 else self.layers[i].inputs.T),
                 self.deltas[i],
             )
             layer.dbiases = np.sum(self.deltas[i], axis=0, keepdims=True)
-            optimizer.update_params(layer)
-            optimizer.post_update_params()
+            self.optimizer_class.update_params(layer)
+            self.optimizer_class.post_update_params()
+            ## here here here
 
             # if self.optimizer == "sgd":
             #     self.weights[i] -= self.lr * np.dot(
@@ -352,6 +353,8 @@ class NeuralNetwork:
         self.lr = learning_rate
         self.loss = loss
         self.optimizer = optimizer
+        if self.optimizer == "sgd":
+            self.optimizer_class = Optimizer_SGD(learning_rate=self.lr)
 
         if self.layers is None and layers is not None:
             self.__init__(layers)
@@ -390,3 +393,10 @@ class NeuralNetwork:
                 train_accuracy_history,
                 valid_accuracy_history,
             )
+
+
+## TODO (2023-01-13 18:26)
+## Optimizer classes 들 적용 시키자
+## 그러려면 현재 코드베이스에서
+## weights, biases 를 DenseLayer쪽으로 옮겨야함
+## 우선 weights, biases 옮기고 난 후에 계산이 잘 되는지 확인하고 개별 optimizer classes들 적용시키자.
