@@ -338,7 +338,7 @@ class NeuralNetwork:
                     end_idx = (step + 1) * batch_size
                     batch_X = X_train[start_idx:end_idx]
                     batch_y = y_train[start_idx:end_idx]
-
+                print(batch_X.shape, batch_y.shape)
                 y_pred = self.feedforward(batch_X)
                 batch_cross_entropy = crossentropy(batch_y, y_pred)
                 loss = np.mean(batch_cross_entropy)

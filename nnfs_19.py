@@ -847,6 +847,8 @@ class Model:
                 if validation_steps * batch_size < len(X_val):
                     validation_steps += 1
 
+        print(train_steps, validation_steps)
+
         # Main training loop
         for epoch in range(1, epochs + 1):
             # Print epoch number
@@ -859,6 +861,7 @@ class Model:
             batch_loss_history = []
 
             # Iterate over steps
+            print(train_steps)
             for step in range(train_steps):
                 # If batch size is not set -
                 # train using one step and full dataset
@@ -870,7 +873,7 @@ class Model:
                 else:
                     batch_X = X[step * batch_size : (step + 1) * batch_size]
                     batch_y = y[step * batch_size : (step + 1) * batch_size]
-
+                # print(batch_X.shape, batch_y.shape)
                 # Perform the forward pass
                 output = self.forward(batch_X, training=True)
 
@@ -1123,5 +1126,5 @@ for layer in model.layers:
 
 # Train the model
 model.train(
-    X, y, validation_data=(X_test, y_test), epochs=5, batch_size=128, print_every=100
+    X, y, validation_data=(X_test, y_test), epochs=10, batch_size=128, print_every=100
 )

@@ -265,25 +265,13 @@ class NeuralNetwork:
         return np.mean(predictions == y_true)
 
     # TODO: remove
-    def get_train_steps(self, batch_size, X_train, X_test):
-        train_steps = 1
-        validation_steps = None
-
-        if X_test is not None:
-            validation_steps = 1
-
-        if batch_size is not None:
-            train_steps = len(X_train) // batch_size
-
-            if train_steps * batch_size < len(X_train):
-                train_steps += 1
-
-            if X_test is not None:
-                validation_steps = len(X_test) // batch_size
-
-                if validation_steps * batch_size < len(X_test):
-                    validation_steps += 1
-
+    def get_train_steps(self, batch_size, X_train, X_valid):
+        train_steps = len(X_train) // batch_size if batch_size else 1
+        if train_steps * batch_size < len(X_train):
+            train_steps += 1
+        validation_steps = len(X_valid) // batch_size if batch_size else 1
+        if validation_steps * batch_size < len(X_valid):
+            validation_steps += 1
         return train_steps, validation_steps
 
     def process_data(self, X, y, steps, batch_size, is_training=True):
@@ -291,6 +279,7 @@ class NeuralNetwork:
 
         for step in range(steps):
             batch_X, batch_y = self.get_batch(X, y, step, batch_size)
+            # print(batch_X.shape, batch_y.shape)
 
             y_pred = self.feedforward(batch_X)
             batch_cross_entropy = crossentropy(batch_y, y_pred)
@@ -306,7 +295,8 @@ class NeuralNetwork:
             if is_training and (not step % 100 or step == steps - 1):
                 print(f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}")
 
-            self.backpropagation(batch_y, y_pred, loss)
+            if is_training:
+                self.backpropagation(batch_y, y_pred, loss)
 
         epoch_loss = total_loss / total_samples
         epoch_accuracy = total_accuracy / total_samples
@@ -317,9 +307,9 @@ class NeuralNetwork:
         if batch_size is None:
             return X, y
         else:
-            start_idx = step * batch_size
-            end_idx = (step + 1) * batch_size
-            return X[start_idx:end_idx], y[start_idx:end_idx]
+            batch_X = X[step * batch_size : (step + 1) * batch_size]
+            batch_y = y[step * batch_size : (step + 1) * batch_size]
+            return batch_X, batch_y
 
     def fit(
         self,
@@ -349,10 +339,6 @@ class NeuralNetwork:
         if self.layers is None and layers is not None:
             self.__init__(layers)
 
-        train_steps, validation_steps = self.get_train_steps(
-            batch_size, X_train, X_valid
-        )
-
         (
             train_loss_history,
             train_accuracy_history,
@@ -360,10 +346,9 @@ class NeuralNetwork:
             valid_accuracy_history,
         ) = ([], [], [], [])
 
-        train_steps = len(X_train) // batch_size if batch_size else 1
-        validation_steps = len(X_valid) // batch_size if batch_size else 1
-        if validation_steps * batch_size < len(X_valid):
-            validation_steps += 1
+        train_steps, validation_steps = self.get_train_steps(
+            batch_size, X_train, X_valid
+        )
 
         for epoch in range(epochs):
             print(f"Epoch: {epoch + 1}")
@@ -372,6 +357,7 @@ class NeuralNetwork:
             )
             train_loss_history.append(train_loss)
             train_accuracy_history.append(train_accuracy)
+            print(f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}")
 
             if X_valid is not None and y_valid is not None:
                 valid_loss, valid_accuracy = self.process_data(
@@ -380,5 +366,3 @@ class NeuralNetwork:
                 valid_loss_history.append(valid_loss)
                 valid_accuracy_history.append(valid_accuracy)
                 print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
-
-            print(f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}")
