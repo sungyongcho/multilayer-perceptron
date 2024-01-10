@@ -298,10 +298,10 @@ class NeuralNetwork:
             if is_training:
                 self.backpropagation(batch_y, y_pred, loss)
 
-        epoch_loss = total_loss / total_samples
-        epoch_accuracy = total_accuracy / total_samples
+        loss = total_loss / total_samples
+        accuracy = total_accuracy / total_samples
 
-        return epoch_loss, epoch_accuracy
+        return loss, accuracy
 
     def get_batch(self, X, y, step, batch_size):
         if batch_size is None:
@@ -321,6 +321,7 @@ class NeuralNetwork:
         batch_size,
         epochs,
         optimizer,
+        plot=False,
     ):
         # loading data
         # Load X_train from the CSV file
@@ -366,3 +367,10 @@ class NeuralNetwork:
                 valid_loss_history.append(valid_loss)
                 valid_accuracy_history.append(valid_accuracy)
                 print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
+        if plot == True:
+            self.plot_graphs(
+                train_loss_history,
+                valid_loss_history,
+                train_accuracy_history,
+                valid_accuracy_history,
+            )
