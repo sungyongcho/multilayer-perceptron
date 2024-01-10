@@ -264,7 +264,6 @@ class NeuralNetwork:
         predictions = (y_pred > 0.5) * 1
         return np.mean(predictions == y_true)
 
-    # TODO: remove
     def get_train_steps(self, batch_size, X_train, X_test):
         train_steps = 1
         validation_steps = None
@@ -286,41 +285,6 @@ class NeuralNetwork:
 
         return train_steps, validation_steps
 
-    def process_data(self, X, y, steps, batch_size, is_training=True):
-        total_loss, total_accuracy, total_samples = 0, 0, 0
-
-        for step in range(steps):
-            batch_X, batch_y = self.get_batch(X, y, step, batch_size)
-
-            y_pred = self.feedforward(batch_X)
-            batch_cross_entropy = crossentropy(batch_y, y_pred)
-            loss = np.mean(batch_cross_entropy)
-
-            total_loss += np.sum(batch_cross_entropy)
-            total_samples += len(batch_cross_entropy)
-
-            batch_compare = self.accuracy(batch_y, y_pred)
-            accuracy = np.mean(batch_compare)
-            total_accuracy += np.sum(batch_compare)
-
-            if is_training and (not step % 100 or step == steps - 1):
-                print(f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}")
-
-            self.backpropagation(batch_y, y_pred, loss)
-
-        epoch_loss = total_loss / total_samples
-        epoch_accuracy = total_accuracy / total_samples
-
-        return epoch_loss, epoch_accuracy
-
-    def get_batch(self, X, y, step, batch_size):
-        if batch_size is None:
-            return X, y
-        else:
-            start_idx = step * batch_size
-            end_idx = (step + 1) * batch_size
-            return X[start_idx:end_idx], y[start_idx:end_idx]
-
     def fit(
         self,
         layers,
@@ -338,8 +302,8 @@ class NeuralNetwork:
         y_train = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
 
         data_valid = True
-        X_valid = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
-        y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
+        X_test = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
+        y_test = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
 
         # set values
         self.lr = learning_rate
@@ -350,7 +314,7 @@ class NeuralNetwork:
             self.__init__(layers)
 
         train_steps, validation_steps = self.get_train_steps(
-            batch_size, X_train, X_valid
+            batch_size, X_train, X_test
         )
 
         (
@@ -359,26 +323,84 @@ class NeuralNetwork:
             valid_loss_history,
             valid_accuracy_history,
         ) = ([], [], [], [])
-
-        train_steps = len(X_train) // batch_size if batch_size else 1
-        validation_steps = len(X_valid) // batch_size if batch_size else 1
-        if validation_steps * batch_size < len(X_valid):
-            validation_steps += 1
-
         for epoch in range(epochs):
-            print(f"Epoch: {epoch + 1}")
-            train_loss, train_accuracy = self.process_data(
-                X_train, y_train, train_steps, batch_size, is_training=True
-            )
-            train_loss_history.append(train_loss)
-            train_accuracy_history.append(train_accuracy)
+            print("epoch:", epoch + 1)
+            total_loss = 0
+            total_accuracy = 0
+            total_samples = 0
+            for step in range(train_steps):
+                if batch_size is None:
+                    batch_X = X_train
+                    batch_y = y_train
 
-            if X_valid is not None and y_valid is not None:
-                valid_loss, valid_accuracy = self.process_data(
-                    X_valid, y_valid, validation_steps, batch_size, is_training=False
-                )
+                else:
+                    start_idx = step * batch_size
+                    end_idx = (step + 1) * batch_size
+                    batch_X = X_train[start_idx:end_idx]
+                    batch_y = y_train[start_idx:end_idx]
+
+                y_pred = self.feedforward(batch_X)
+                batch_cross_entropy = crossentropy(batch_y, y_pred)
+                loss = np.mean(batch_cross_entropy)
+
+                total_loss += np.sum(batch_cross_entropy)
+                total_samples += len(batch_cross_entropy)
+
+                batch_compare = self.accuracy(batch_y, y_pred)
+                accuracy = np.mean(batch_compare)
+                total_accuracy += np.sum(batch_compare)
+
+                # if not epoch % 100:
+                if not step % 100 or step == train_steps - 1:
+                    print(
+                        "step:",
+                        step,
+                        "accuracy:,",
+                        accuracy,
+                        "loss:",
+                        loss,
+                    )
+                self.backpropagation(batch_y, y_pred, loss)
+            epoch_loss = total_loss / total_samples
+            epoch_accuracy = total_accuracy / total_samples
+            train_loss_history.append(epoch_loss)
+            train_accuracy_history.append(epoch_accuracy)
+
+            print("training, ", "acc: ", epoch_accuracy, "loss: ", epoch_loss)
+
+            if data_valid:
+                valid_total_loss = 0
+                valid_total_accuracy = 0
+                valid_total_samples = 0
+                for step in range(validation_steps):
+                    if batch_size is None:
+                        batch_valid_X = X_test
+                        batch_valid_y = y_test
+                    else:
+                        batch_valid_X = X_test[
+                            step * batch_size : (step + 1) * batch_size
+                        ]
+                        batch_valid_y = y_test[
+                            step * batch_size : (step + 1) * batch_size
+                        ]
+                    y_pred_valid = self.feedforward(batch_valid_X)
+                    valid_crossentropy = crossentropy(batch_valid_y, y_pred_valid)
+                    valid_total_samples += len(valid_crossentropy)
+                    valid_total_loss += np.sum(valid_crossentropy)
+
+                    valid_compare = self.accuracy(batch_valid_y, y_pred_valid)
+                    valid_total_accuracy += np.sum(valid_compare)
+
+                    # val_loss = np.mean(c)
+                    acc = self.accuracy(batch_valid_y, y_pred_valid)
+                valid_loss = valid_total_loss / valid_total_samples
+                valid_accuracy = valid_total_accuracy / valid_total_samples
                 valid_loss_history.append(valid_loss)
                 valid_accuracy_history.append(valid_accuracy)
-                print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
-
-            print(f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}")
+                print("validation, ", "acc: ", valid_accuracy, "loss: ", valid_loss)
+        self.plot_graphs(
+            train_loss_history,
+            valid_loss_history,
+            train_accuracy_history,
+            valid_accuracy_history,
+        )
