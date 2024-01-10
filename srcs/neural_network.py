@@ -2,6 +2,7 @@ import pandas as pd
 from srcs.dense_layer import DenseLayer
 from matplotlib import pyplot as plt
 from srcs.layers import Layers
+from srcs.optimizers.optimizer_sgd import Optimizer_SGD
 from srcs.utils import (
     binary_crossentropy,
     binary_crossentropy_deriv,
@@ -122,6 +123,7 @@ class NeuralNetwork:
             self.biases = [None] * (len(self.layers) - 1)
             self.lr = None
             self.optimizer = None
+            self.optimizer_class = None
         else:
             self.layers = layers
 
@@ -216,12 +218,26 @@ class NeuralNetwork:
 
         # update weights and biases
         for i in reversed(range(len(self.weights))):
-            self.weights[i] -= self.lr * np.dot(
+            optimizer = Optimizer_SGD(learning_rate=self.lr)
+            optimizer.pre_update_params()
+            layer = self.layers[i + 1]
+            layer.dweights = np.dot(
                 (self.outputs[i - 1].T if i > 0 else self.layers[i].inputs.T),
                 self.deltas[i],
             )
+            layer.dbiases = np.sum(self.deltas[i], axis=0, keepdims=True)
+            optimizer.update_params(layer)
+            optimizer.post_update_params()
 
-            self.biases[i] -= self.lr * np.sum(self.deltas[i], axis=0, keepdims=True)
+            # if self.optimizer == "sgd":
+            #     self.weights[i] -= self.lr * np.dot(
+            #         (self.outputs[i - 1].T if i > 0 else self.layers[i].inputs.T),
+            #         self.deltas[i],
+            #     )
+
+            #     self.biases[i] -= self.lr * np.sum(
+            #         self.deltas[i], axis=0, keepdims=True
+            #     )
 
     def plot_graphs(
         self,
