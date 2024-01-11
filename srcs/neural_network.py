@@ -117,10 +117,7 @@ class NeuralNetwork:
     def __init__(self, layers=None):
         if layers != None:
             self.layers = Layers(layers)
-            self.weights = [None] * (len(self.layers) - 1)
-            self.outputs = [None] * (len(self.layers) - 1)
             self.deltas = [None] * (len(self.layers) - 1)
-            self.biases = [None] * (len(self.layers) - 1)
             self.lr = None
             self.optimizer = None
             self.optimizer_class = None
@@ -132,17 +129,17 @@ class NeuralNetwork:
         return f"{self.layers}" if self.layers is not None else None
 
     def _init_weights(self):
-        # for i in range(len(self.layers) - 1):
-        #     if self.layers[i + 1].weights_initializer == "random":
-        #         self.weights[i] = np.random.randn(
+        # for i in range(1, len(self.layers)):
+        #     if self.layers[i].weights_initializer == "random":
+        #         self.layers[i].weights = np.random.randn(
         #             self.layers[i].shape, self.layers[i + 1].shape
         #         )
-        #     elif self.layers[i + 1].weights_initializer == "zeros":
-        #         self.weights[i] = np.zeros(
+        #     elif self.layers[i].weights_initializer == "zeros":
+        #         self.layers[i].weights = np.zeros(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
         #     elif self.layers[i + 1].weights_initializer == "heUniform":
-        #         self.weights[i] = heUniform(
+        #         self.layers[i].weights = heUniform(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
         self.layers[1].weights = np.loadtxt(
@@ -191,58 +188,63 @@ class NeuralNetwork:
         return self.layers[-1].outputs
 
     def predict(self, row):
-        self.feedforward(row)
+        return self.feedforward(row)
 
-        return self.outputs[-1]
+        return self.layers[-1].outputs
 
     def backpropagation(self, y_true, y_pred, loss):
         # for first index output only
         if self.loss == "classCrossentropy":
-            self.deltas[-1] = categorical_crossentropy_deriv(y_pred, y_true)
+            self.layers[-1].deltas = categorical_crossentropy_deriv(y_pred, y_true)
         elif self.loss == "binaryCrossentropy":
             output_gradient = binary_crossentropy_deriv(y_pred, y_true)
-            self.deltas[-1] = output_gradient * sigmoid_deriv(y_pred)
+            self.layers[-1].deltas = output_gradient * sigmoid_deriv(y_pred)
 
-        di = np.dot(self.deltas[-1], self.weights[-1].T)
+        di = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
 
         # update gradients (delta)
-        for i in reversed(range(len(self.weights) - 1)):
-            if self.layers[i + 1].activation == "relu":
-                self.deltas[i] = relu_derivative(di, self.layers[i + 1].inputs)
-            elif self.layers[i + 1].activation == "sigmoid":
+        for i in reversed(range(1, len(self.layers) - 1)):
+            # print(i)
+            if self.layers[i].activation == "relu":
+                self.layers[i].deltas = relu_derivative(di, self.layers[i].inputs)
+            elif self.layers[i].activation == "sigmoid":
                 pass
                 # self.deltas[i] = np.dot(
                 #     self.deltas[i + 1], self.weights[i + 1].T
                 # ) * sigmoid_derivative(self.outputs[i])
-            elif self.layers[i + 1].activation == "softmax":
+            elif self.layers[i].activation == "softmax":
                 pass
                 # self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
 
-            di = np.dot(self.deltas[i], self.weights[i].T)
+            di = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
 
         # update weights and biases
-        for i in reversed(range(len(self.weights))):
-            ## here here here
-            self.optimizer_class.pre_update_params()
-            layer = self.layers[i + 1]
-            layer.dweights = np.dot(
-                (self.outputs[i - 1].T if i > 0 else self.layers[i].inputs.T),
-                self.deltas[i],
-            )
-            layer.dbiases = np.sum(self.deltas[i], axis=0, keepdims=True)
-            self.optimizer_class.update_params(layer)
-            self.optimizer_class.post_update_params()
-            ## here here here
+        for i in reversed(range(1, len(self.layers))):
+            # ## here here here
+            # self.optimizer_class.pre_update_params()
+            # layer = self.layers[i + 1]
+            # layer.dweights = np.dot(
+            #     (self.outputs[i - 1].T if i > 0 else self.layers[i].inputs.T),
+            #     self.deltas[i],
+            # )
+            # layer.dbiases = np.sum(self.deltas[i], axis=0, keepdims=True)
+            # self.optimizer_class.update_params(layer)
+            # self.optimizer_class.post_update_params()
+            # ## here here here
 
-            # if self.optimizer == "sgd":
-            #     self.weights[i] -= self.lr * np.dot(
-            #         (self.outputs[i - 1].T if i > 0 else self.layers[i].inputs.T),
-            #         self.deltas[i],
-            #     )
+            if self.optimizer == "sgd":
+                self.layers[i].weights -= self.lr * np.dot(
+                    (
+                        self.layers[i - 1].outputs.T
+                        # if i > 0V
+                        #     else self.layers[i].inputs.T
+                    ),
+                    self.layers[i].deltas,
+                )
 
-            #     self.biases[i] -= self.lr * np.sum(
-            #         self.deltas[i], axis=0, keepdims=True
-            #     )
+                self.layers[i].biases -= self.lr * np.sum(
+                    self.layers[i].deltas, axis=0, keepdims=True
+                )
 
     def plot_graphs(
         self,
@@ -377,26 +379,26 @@ class NeuralNetwork:
         for epoch in range(epochs):
             print(f"Epoch: {epoch + 1}")
             train_loss, train_accuracy = self.process_data(
-                X_train, y_train, train_steps, batch_size, is_training=False
+                X_train, y_train, train_steps, batch_size, is_training=True
             )
             train_loss_history.append(train_loss)
             train_accuracy_history.append(train_accuracy)
             print(f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}")
 
-        #     if X_valid is not None and y_valid is not None:
-        #         valid_loss, valid_accuracy = self.process_data(
-        #             X_valid, y_valid, validation_steps, batch_size, is_training=False
-        #         )
-        #         valid_loss_history.append(valid_loss)
-        #         valid_accuracy_history.append(valid_accuracy)
-        #         print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
-        # if plot == True:
-        #     self.plot_graphs(
-        #         train_loss_history,
-        #         valid_loss_history,
-        #         train_accuracy_history,
-        #         valid_accuracy_history,
-        #     )
+            if X_valid is not None and y_valid is not None:
+                valid_loss, valid_accuracy = self.process_data(
+                    X_valid, y_valid, validation_steps, batch_size, is_training=False
+                )
+                valid_loss_history.append(valid_loss)
+                valid_accuracy_history.append(valid_accuracy)
+                print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
+        if plot == True:
+            self.plot_graphs(
+                train_loss_history,
+                valid_loss_history,
+                train_accuracy_history,
+                valid_accuracy_history,
+            )
 
 
 ## TODO (2023-01-13 18:26)

@@ -20,6 +20,7 @@ class DenseLayer:
         self.weights_initializer = weights_initializer
         self.weights = None
         self.biases = None
+        self.deltas = None
 
         if self.activation == "sigmoid":
             self.activation_function = lambda x: sigmoid_(x)
