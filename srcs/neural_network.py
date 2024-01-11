@@ -191,8 +191,6 @@ class NeuralNetwork:
     def predict(self, row):
         return self.feedforward(row)
 
-        return self.layers[-1].outputs
-
     def backpropagation(self, y_true, y_pred):
         # for first index output only
         if self.loss == "classCrossentropy":
@@ -201,13 +199,13 @@ class NeuralNetwork:
             output_gradient = binary_crossentropy_deriv(y_pred, y_true)
             self.layers[-1].deltas = output_gradient * sigmoid_deriv(y_pred)
 
-        di = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
+        error = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
 
-        # update gradients (delta)
+        # update activation gradients (delta)
         for i in reversed(range(1, len(self.layers) - 1)):
             # print(i)
             if self.layers[i].activation == "relu":
-                self.layers[i].deltas = relu_derivative(di, self.layers[i].inputs)
+                self.layers[i].deltas = relu_derivative(error, self.layers[i].inputs)
             elif self.layers[i].activation == "sigmoid":
                 pass
                 # self.deltas[i] = np.dot(
@@ -217,7 +215,7 @@ class NeuralNetwork:
                 pass
                 # self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
 
-            di = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
+            error = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
 
         self.optimizer_class.pre_update_params()
         for i in reversed(range(1, len(self.layers))):
@@ -349,7 +347,7 @@ class NeuralNetwork:
         if self.optimizer == "sgd":
             self.optimizer_class = Optimizer_SGD(learning_rate=self.lr)
         elif self.optimizer == "adam":
-            self.optimizer_class = Optimizer_Adam(decay=1e-3)
+            self.optimizer_class = Optimizer_Adam(decay=1e-4)
 
         if self.layers is None and layers is not None:
             self.__init__(layers)
