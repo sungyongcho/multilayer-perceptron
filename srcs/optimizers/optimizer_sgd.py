@@ -19,7 +19,9 @@ class Optimizer_SGD:
             )
 
     # Update parameters
-    def update_params(self, layer):
+    def update_params(self, layer, prev_layer_output):
+        dweights = np.dot(prev_layer_output, layer.deltas)
+        dbiases = np.sum(layer.deltas, axis=0, keepdims=True)
         # If we use momentum
         if self.momentum:
             # If layer does not contain momentum arrays, create them
@@ -36,7 +38,7 @@ class Optimizer_SGD:
             # current gradients
             weight_updates = (
                 self.momentum * layer.weight_momentums
-                - self.current_learning_rate * layer.dweights
+                - self.current_learning_rate * dweights
             )
             layer.weight_momentums = weight_updates
 
@@ -49,8 +51,8 @@ class Optimizer_SGD:
 
         # Vanilla SGD updates (as before momentum update)
         else:
-            weight_updates = -self.current_learning_rate * layer.dweights
-            bias_updates = -self.current_learning_rate * layer.dbiases
+            weight_updates = -self.current_learning_rate * dweights
+            bias_updates = -self.current_learning_rate * dbiases
 
         # Update weights and biases using either
         # vanilla or momentum updates

@@ -220,31 +220,23 @@ class NeuralNetwork:
 
         # update weights and biases
         for i in reversed(range(1, len(self.layers))):
-            # ## here here here
-            # self.optimizer_class.pre_update_params()
-            # layer = self.layers[i + 1]
-            # layer.dweights = np.dot(
-            #     (self.outputs[i - 1].T if i > 0 else self.layers[i].inputs.T),
-            #     self.deltas[i],
-            # )
-            # layer.dbiases = np.sum(self.deltas[i], axis=0, keepdims=True)
-            # self.optimizer_class.update_params(layer)
-            # self.optimizer_class.post_update_params()
-            # ## here here here
+            ## here here here
+            self.optimizer_class.pre_update_params()
+            self.optimizer_class.update_params(
+                self.layers[i], self.layers[i - 1].outputs.T
+            )
+            self.optimizer_class.post_update_params()
+            ## here here here
 
-            if self.optimizer == "sgd":
-                self.layers[i].weights -= self.lr * np.dot(
-                    (
-                        self.layers[i - 1].outputs.T
-                        # if i > 0V
-                        #     else self.layers[i].inputs.T
-                    ),
-                    self.layers[i].deltas,
-                )
+            # if self.optimizer == "sgd":
+            #     self.layers[i].weights -= self.lr * np.dot(
+            #         self.layers[i - 1].outputs.T,
+            #         self.layers[i].deltas,
+            #     )
 
-                self.layers[i].biases -= self.lr * np.sum(
-                    self.layers[i].deltas, axis=0, keepdims=True
-                )
+            #     self.layers[i].biases -= self.lr * np.sum(
+            #         self.layers[i].deltas, axis=0, keepdims=True
+            #     )
 
     def plot_graphs(
         self,
@@ -315,7 +307,7 @@ class NeuralNetwork:
             accuracy = np.mean(batch_compare)
             total_accuracy += np.sum(batch_compare)
 
-            if not step % 100 or step == steps - 1:
+            if is_training and (not step % 100 or step == steps - 1):
                 print(f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}")
 
             if is_training:
