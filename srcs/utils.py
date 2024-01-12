@@ -184,3 +184,16 @@ def binary_crossentropy_deriv(y_pred, y_true):
 
     output = -(y_true / clipped - (1 - y_true) / (1 - clipped)) / outputs
     return output / samples
+
+
+def accuracy(y_true, y_pred):
+    # NEED TO CHECK
+    predictions = np.argmax(y_pred, axis=1)
+    if len(y_true.shape) == 2:
+        y_true = np.argmax(y_true, axis=1)
+    return predictions == y_true
+
+
+def accuracy_binary(y_true, y_pred):
+    predictions = (y_pred > 0.5) * 1
+    return np.mean(predictions == y_true)

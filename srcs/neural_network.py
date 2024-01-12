@@ -7,10 +7,8 @@ from srcs.optimizers.optimizer_adam import Optimizer_Adam
 from srcs.utils import (
     binary_crossentropy,
     binary_crossentropy_deriv,
-    convert_binary,
-    heUniform_,
-    mse_,
-    normalization,
+    accuracy,
+    accuracy_binary,
 )
 
 import numpy as np
@@ -22,16 +20,6 @@ import numpy as np
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
-
-
-# def binary_crossentropy_deriv(y_pred, y_true):
-#     samples = len(y_pred)
-#     outputs = len(y_pred[0])
-
-#     clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
-
-#     output = -(y_true / clipped - (1 - y_true) / (1 - clipped)) / outputs
-#     return output / samples
 
 
 def sigmoid_deriv(y_pred):
@@ -67,6 +55,19 @@ def categorical_crossentropy_deriv(y_pred, y_true):
     return y_pred / len(y_pred)
 
 
+def accuracy(y_true, y_pred):
+    # NEED TO CHECK
+    predictions = np.argmax(y_pred, axis=1)
+    if len(y_true.shape) == 2:
+        y_true = np.argmax(y_true, axis=1)
+    return predictions == y_true
+
+
+def accuracy_binary(y_true, y_pred):
+    predictions = (y_pred > 0.5) * 1
+    return np.mean(predictions == y_true)
+
+
 def crossentropy(y_true, y_pred):
     samples = len(y_pred)
 
@@ -95,6 +96,8 @@ class NeuralNetwork:
             self.layers = Layers(layers)
             self.deltas = [None] * (len(self.layers) - 1)
             self.optimizer = None
+            self.crossentropy_function = None
+            self.accuracy_function = None
         else:
             self.layers = layers
 
@@ -133,6 +136,29 @@ class NeuralNetwork:
             # elif self.layers[i].weights_initializer == "zeros":
             self.layers[i].biases = np.zeros((1, self.layers[i].shape))
 
+    def _assign_optimizer_class(self, optimizer, learning_rate, decay):
+        if optimizer == "sgd":
+            self.optimizer = Optimizer_SGD(learning_rate=learning_rate, decay=decay)
+        elif optimizer == "adam":
+            self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
+
+    def _set_crossentropy_name(self, loss):
+        if loss != "binaryCrossentropy" and loss != "classCrossentropy":
+            raise ValueError("loss not set correctly.")
+        if loss == "classCrossentropy":
+            self.crossentropy_function = lambda y_true, y_pred: crossentropy(
+                y_true, y_pred
+            )
+            self.accuracy_function = lambda y_true, y_pred: accuracy(y_true, y_pred)
+        elif loss == "binaryCrossentropy":
+            self.crossentropy_function = lambda y_true, y_pred: binary_crossentropy(
+                y_true, y_pred
+            )
+            self.accuracy_function = lambda y_true, y_pred: accuracy_binary(
+                y_true, y_pred
+            )
+        self.loss = loss
+
     def createNetwork(self, layers) -> Layers:
         self.__init__(layers)
         self._init_weights()
@@ -167,6 +193,7 @@ class NeuralNetwork:
 
     def backpropagation(self, y_true, y_pred):
         # for first index output only
+        # TODO: can make this cleaner
         if self.loss == "classCrossentropy":
             self.layers[-1].deltas = categorical_crossentropy_deriv(y_pred, y_true)
         elif self.loss == "binaryCrossentropy":
@@ -226,17 +253,6 @@ class NeuralNetwork:
     def mse_loss(self, y_true, y_pred):
         return np.mean((y_true - y_pred) ** 2)
 
-    def accuracy(self, y_true, y_pred):
-        # NEED TO CHECK
-        predictions = np.argmax(y_pred, axis=1)
-        if len(y_true.shape) == 2:
-            y_true = np.argmax(y_true, axis=1)
-        return predictions == y_true
-
-    def accuracy_binary(self, y_true, y_pred):
-        predictions = (y_pred > 0.5) * 1
-        return np.mean(predictions == y_true)
-
     def get_train_steps(self, batch_size, X_train, X_valid):
         train_steps = len(X_train) // batch_size if batch_size else 1
         if train_steps * batch_size < len(X_train):
@@ -254,10 +270,10 @@ class NeuralNetwork:
 
             y_pred = self.feedforward(batch_X)
 
-            batch_crossentropy = crossentropy(batch_y, y_pred)
+            batch_crossentropy = self.crossentropy_function(batch_y, y_pred)
             loss = np.mean(batch_crossentropy)
 
-            batch_compare = self.accuracy(batch_y, y_pred)
+            batch_compare = self.accuracy_function(batch_y, y_pred)
             accuracy = np.mean(batch_compare)
 
             total_loss += np.sum(batch_crossentropy)
@@ -267,7 +283,7 @@ class NeuralNetwork:
             if is_training:
                 self.backpropagation(batch_y, y_pred)
 
-            if is_training and (not step % 100 or step == steps - 1):
+            if is_training and (not step % self.print_every or step == steps - 1):
                 # pass
                 print(
                     f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}, LR: {self.optimizer.current_learning_rate}"
@@ -292,12 +308,13 @@ class NeuralNetwork:
         data_train,
         data_valid,
         loss,
-        learning_rate,
-        batch_size,
-        epochs,
         optimizer,
+        learning_rate=0.01,
+        batch_size=None,
+        epochs=1,
         plot=False,
         decay=0.0,
+        print_every=1,
     ):
         # loading data
         # Load X_train from the CSV file
@@ -309,11 +326,9 @@ class NeuralNetwork:
         y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
 
         # set values
-        self.loss = loss
-        if optimizer == "sgd":
-            self.optimizer = Optimizer_SGD(learning_rate=learning_rate, decay=decay)
-        elif optimizer == "adam":
-            self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
+        self._set_crossentropy_name(loss)
+        self.print_every = print_every
+        self._assign_optimizer_class(optimizer, learning_rate, decay)
 
         if self.layers is None and layers is not None:
             self.__init__(layers)
@@ -345,6 +360,7 @@ class NeuralNetwork:
                 valid_loss_history.append(valid_loss)
                 valid_accuracy_history.append(valid_accuracy)
                 print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
+
         if plot == True:
             self.plot_graphs(
                 train_loss_history,
