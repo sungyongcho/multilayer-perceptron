@@ -1,22 +1,11 @@
 import numpy as np
+from srcs.optimizers.optimizer import Optimizer
 
 
-class Optimizer_SGD:
-    # Initialize optimizer - set settings,
-    # learning rate of 1. is default for this optimizer
+class Optimizer_SGD(Optimizer):
     def __init__(self, learning_rate=1.0, decay=0.0, momentum=0.0):
-        self.learning_rate = learning_rate
-        self.current_learning_rate = learning_rate
-        self.decay = decay
-        self.iterations = 0
+        super().__init__(learning_rate, decay)
         self.momentum = momentum
-
-    # Call once before any parameter updates
-    def pre_update_params(self):
-        if self.decay:
-            self.current_learning_rate = self.learning_rate * (
-                1.0 / (1.0 + self.decay * self.iterations)
-            )
 
     # Update parameters
     def update_params(self, layer, prev_layer_output):
@@ -58,7 +47,3 @@ class Optimizer_SGD:
         # vanilla or momentum updates
         layer.weights += weight_updates
         layer.biases += bias_updates
-
-    # Call once after any parameter updates
-    def post_update_params(self):
-        self.iterations += 1

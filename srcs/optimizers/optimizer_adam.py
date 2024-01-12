@@ -1,25 +1,17 @@
 import numpy as np
 
+from srcs.optimizers.optimizer import Optimizer
 
-class Optimizer_Adam:
+
+class Optimizer_Adam(Optimizer):
     # Initialize optimizer - set settings
     def __init__(
         self, learning_rate=0.001, decay=0.0, epsilon=1e-7, beta_1=0.9, beta_2=0.999
     ):
-        self.learning_rate = learning_rate
-        self.current_learning_rate = learning_rate
-        self.decay = decay
-        self.iterations = 0
+        super().__init__(learning_rate, decay)
         self.epsilon = epsilon
         self.beta_1 = beta_1
         self.beta_2 = beta_2
-
-    # Call once before any parameter updates
-    def pre_update_params(self):
-        if self.decay:
-            self.current_learning_rate = self.learning_rate * (
-                1.0 / (1.0 + self.decay * self.iterations)
-            )
 
     # Update parameters
     def update_params(self, layer, prev_layer_output):
@@ -77,7 +69,3 @@ class Optimizer_Adam:
             * bias_momentums_corrected
             / (np.sqrt(bias_cache_corrected) + self.epsilon)
         )
-
-    # Call once after any parameter updates
-    def post_update_params(self):
-        self.iterations += 1

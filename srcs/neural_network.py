@@ -24,15 +24,6 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def updated_binary_cross_entropy_loss(y_pred, y_true):
-    y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
-    sample_losses = -(
-        y_true * np.log(y_pred_clipped) + (1 - y_true) * np.log(1 - y_pred_clipped)
-    )
-    sample_losses = np.mean(sample_losses, axis=-1)
-    return sample_losses
-
-
 def binary_crossentropy_deriv(y_pred, y_true):
     samples = len(y_pred)
     outputs = len(y_pred[0])
@@ -144,13 +135,13 @@ class NeuralNetwork:
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
         self.layers[1].weights = np.loadtxt(
-            "/goinfre/sucho/nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
+            "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
         )
         self.layers[2].weights = np.loadtxt(
-            "/goinfre/sucho/nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
+            "./nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
         )
         self.layers[3].weights = np.loadtxt(
-            "/goinfre/sucho/nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
+            "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
         )
 
     def _init_bias(self):
@@ -329,16 +320,12 @@ class NeuralNetwork:
     ):
         # loading data
         # Load X_train from the CSV file
-        X_train = np.loadtxt("/goinfre/sucho/nnfs_data/X_train_19.csv", delimiter=",")
-        y_train = np.loadtxt(
-            "/goinfre/sucho/nnfs_data/y_train_19.csv", delimiter=","
-        ).astype(int)
+        X_train = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
+        y_train = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
 
         data_valid = True
-        X_valid = np.loadtxt("/goinfre/sucho/nnfs_data/X_test_19.csv", delimiter=",")
-        y_valid = np.loadtxt(
-            "/goinfre/sucho/nnfs_data/y_test_19.csv", delimiter=","
-        ).astype(int)
+        X_valid = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
+        y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
 
         # set values
         self.lr = learning_rate

@@ -1065,11 +1065,11 @@ def create_data_mnist(path):
 # X_test = (X_test.reshape(X_test.shape[0], -1).astype(np.float32) -
 #              127.5) / 127.5
 
-X = np.loadtxt("/goinfre/sucho/nnfs_data/X_train_19.csv", delimiter=",")
-y = np.loadtxt("/goinfre/sucho/nnfs_data/y_train_19.csv", delimiter=",").astype(int)
+X = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
+y = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
 
-X_test = np.loadtxt("/goinfre/sucho/nnfs_data/X_test_19.csv", delimiter=",")
-y_test = np.loadtxt("/goinfre/sucho/nnfs_data/y_test_19.csv", delimiter=",").astype(int)
+X_test = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
+y_test = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
 
 
 # Instantiate the model
@@ -1087,7 +1087,7 @@ model.add(Activation_Softmax())
 # Set loss, optimizer and accuracy objects
 model.set(
     loss=Loss_CategoricalCrossentropy(),
-    optimizer=Optimizer_Adam(decay=1e-3),
+    optimizer=Optimizer_Adam(decay=1e-4),
     accuracy=Accuracy_Categorical(),
 )
 
@@ -1098,10 +1098,10 @@ i = 1
 for layer in model.layers:
     if hasattr(layer, "weights"):
         # np.savetxt(
-        #     f"/goinfre/sucho/nnfs_data/weights{i}_19.csv", layer.weights, delimiter=","
+        #     f"./nnfs_data/weights{i}_19.csv", layer.weights, delimiter=","
         # )
         layer.weights = np.loadtxt(
-            f"/goinfre/sucho/nnfs_data/weights{i}_19.csv",
+            f"./nnfs_data/weights{i}_19.csv",
             delimiter=",",
             dtype=np.float64,
         )
