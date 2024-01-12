@@ -3,6 +3,7 @@ from srcs.dense_layer import DenseLayer
 from matplotlib import pyplot as plt
 from srcs.layers import Layers
 from srcs.optimizers.optimizer_sgd import Optimizer_SGD
+from srcs.optimizers.optimizer_adam import Optimizer_Adam
 from srcs.utils import (
     binary_crossentropy,
     binary_crossentropy_deriv,
@@ -143,13 +144,13 @@ class NeuralNetwork:
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
         self.layers[1].weights = np.loadtxt(
-            "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
+            "/goinfre/sucho/nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
         )
         self.layers[2].weights = np.loadtxt(
-            "./nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
+            "/goinfre/sucho/nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
         )
         self.layers[3].weights = np.loadtxt(
-            "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
+            "/goinfre/sucho/nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
         )
 
     def _init_bias(self):
@@ -192,7 +193,7 @@ class NeuralNetwork:
 
         return self.layers[-1].outputs
 
-    def backpropagation(self, y_true, y_pred, loss):
+    def backpropagation(self, y_true, y_pred, step):
         # for first index output only
         if self.loss == "classCrossentropy":
             self.layers[-1].deltas = categorical_crossentropy_deriv(y_pred, y_true)
@@ -202,11 +203,16 @@ class NeuralNetwork:
 
         di = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
 
+        # if step == 0:
+        #     print(di)
+
         # update gradients (delta)
         for i in reversed(range(1, len(self.layers) - 1)):
             # print(i)
             if self.layers[i].activation == "relu":
                 self.layers[i].deltas = relu_derivative(di, self.layers[i].inputs)
+                # if step == 0 and i == 1:
+                #     print(self.layers[i].deltas)
             elif self.layers[i].activation == "sigmoid":
                 pass
                 # self.deltas[i] = np.dot(
@@ -217,26 +223,27 @@ class NeuralNetwork:
                 # self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
 
             di = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
+            # if step == 0 and i == 1:
+            #     print(di)
 
         # update weights and biases
+        self.optimizer_class.pre_update_params()
         for i in reversed(range(1, len(self.layers))):
-            ## here here here
-            self.optimizer_class.pre_update_params()
             self.optimizer_class.update_params(
-                self.layers[i], self.layers[i - 1].outputs.T
+                self.layers[i], self.layers[i - 1].outputs.T, step
             )
-            self.optimizer_class.post_update_params()
-            ## here here here
+        self.optimizer_class.post_update_params()
+        ## here here here
 
-            # if self.optimizer == "sgd":
-            #     self.layers[i].weights -= self.lr * np.dot(
-            #         self.layers[i - 1].outputs.T,
-            #         self.layers[i].deltas,
-            #     )
+        # if self.optimizer == "sgd":
+        #     self.layers[i].weights -= self.lr * np.dot(
+        #         self.layers[i - 1].outputs.T,
+        #         self.layers[i].deltas,
+        #     )
 
-            #     self.layers[i].biases -= self.lr * np.sum(
-            #         self.layers[i].deltas, axis=0, keepdims=True
-            #     )
+        #     self.layers[i].biases -= self.lr * np.sum(
+        #         self.layers[i].deltas, axis=0, keepdims=True
+        #     )
 
     def plot_graphs(
         self,
@@ -307,11 +314,14 @@ class NeuralNetwork:
             accuracy = np.mean(batch_compare)
             total_accuracy += np.sum(batch_compare)
 
-            if is_training and (not step % 100 or step == steps - 1):
-                print(f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}")
-
             if is_training:
-                self.backpropagation(batch_y, y_pred, loss)
+                self.backpropagation(batch_y, y_pred, step)
+
+            if is_training and (step == 0 or step == 1):
+                # pass
+                print(
+                    f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}, LR: {self.optimizer_class.current_learning_rate}"
+                )
 
         loss = total_loss / total_samples
         accuracy = total_accuracy / total_samples
@@ -340,12 +350,16 @@ class NeuralNetwork:
     ):
         # loading data
         # Load X_train from the CSV file
-        X_train = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
-        y_train = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
+        X_train = np.loadtxt("/goinfre/sucho/nnfs_data/X_train_19.csv", delimiter=",")
+        y_train = np.loadtxt(
+            "/goinfre/sucho/nnfs_data/y_train_19.csv", delimiter=","
+        ).astype(int)
 
         data_valid = True
-        X_valid = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
-        y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
+        X_valid = np.loadtxt("/goinfre/sucho/nnfs_data/X_test_19.csv", delimiter=",")
+        y_valid = np.loadtxt(
+            "/goinfre/sucho/nnfs_data/y_test_19.csv", delimiter=","
+        ).astype(int)
 
         # set values
         self.lr = learning_rate
@@ -353,6 +367,8 @@ class NeuralNetwork:
         self.optimizer = optimizer
         if self.optimizer == "sgd":
             self.optimizer_class = Optimizer_SGD(learning_rate=self.lr)
+        elif self.optimizer == "adam":
+            self.optimizer_class = Optimizer_Adam(learning_rate=self.lr)
 
         if self.layers is None and layers is not None:
             self.__init__(layers)
