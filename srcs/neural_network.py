@@ -193,7 +193,7 @@ class NeuralNetwork:
 
         return self.layers[-1].outputs
 
-    def backpropagation(self, y_true, y_pred, step):
+    def backpropagation(self, y_true, y_pred):
         # for first index output only
         if self.loss == "classCrossentropy":
             self.layers[-1].deltas = categorical_crossentropy_deriv(y_pred, y_true)
@@ -203,16 +203,11 @@ class NeuralNetwork:
 
         di = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
 
-        # if step == 0:
-        #     print(di)
-
         # update gradients (delta)
         for i in reversed(range(1, len(self.layers) - 1)):
             # print(i)
             if self.layers[i].activation == "relu":
                 self.layers[i].deltas = relu_derivative(di, self.layers[i].inputs)
-                # if step == 0 and i == 1:
-                #     print(self.layers[i].deltas)
             elif self.layers[i].activation == "sigmoid":
                 pass
                 # self.deltas[i] = np.dot(
@@ -223,27 +218,13 @@ class NeuralNetwork:
                 # self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
 
             di = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
-            # if step == 0 and i == 1:
-            #     print(di)
 
-        # update weights and biases
         self.optimizer_class.pre_update_params()
         for i in reversed(range(1, len(self.layers))):
             self.optimizer_class.update_params(
-                self.layers[i], self.layers[i - 1].outputs.T, step
+                self.layers[i], self.layers[i - 1].outputs.T
             )
         self.optimizer_class.post_update_params()
-        ## here here here
-
-        # if self.optimizer == "sgd":
-        #     self.layers[i].weights -= self.lr * np.dot(
-        #         self.layers[i - 1].outputs.T,
-        #         self.layers[i].deltas,
-        #     )
-
-        #     self.layers[i].biases -= self.lr * np.sum(
-        #         self.layers[i].deltas, axis=0, keepdims=True
-        #     )
 
     def plot_graphs(
         self,
@@ -315,9 +296,9 @@ class NeuralNetwork:
             total_accuracy += np.sum(batch_compare)
 
             if is_training:
-                self.backpropagation(batch_y, y_pred, step)
+                self.backpropagation(batch_y, y_pred)
 
-            if is_training and (step == 0 or step == 1):
+            if is_training and (not step % 100 or step == steps - 1):
                 # pass
                 print(
                     f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}, LR: {self.optimizer_class.current_learning_rate}"
@@ -368,7 +349,7 @@ class NeuralNetwork:
         if self.optimizer == "sgd":
             self.optimizer_class = Optimizer_SGD(learning_rate=self.lr)
         elif self.optimizer == "adam":
-            self.optimizer_class = Optimizer_Adam(learning_rate=self.lr)
+            self.optimizer_class = Optimizer_Adam(decay=1e-3)
 
         if self.layers is None and layers is not None:
             self.__init__(layers)
@@ -407,10 +388,3 @@ class NeuralNetwork:
                 train_accuracy_history,
                 valid_accuracy_history,
             )
-
-
-## TODO (2023-01-13 18:26)
-## Optimizer classes 들 적용 시키자
-## 그러려면 현재 코드베이스에서
-## weights, biases 를 DenseLayer쪽으로 옮겨야함
-## 우선 weights, biases 옮기고 난 후에 계산이 잘 되는지 확인하고 개별 optimizer classes들 적용시키자.

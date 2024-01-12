@@ -22,7 +22,7 @@ class Optimizer_Adam:
             )
 
     # Update parameters
-    def update_params(self, layer, prev_layer_output, step):
+    def update_params(self, layer, prev_layer_output):
         dweights = np.dot(prev_layer_output, layer.deltas)
         dbiases = np.sum(layer.deltas, axis=0, keepdims=True)
         # If layer does not contain cache arrays,
@@ -46,8 +46,6 @@ class Optimizer_Adam:
         weight_momentums_corrected = layer.weight_momentums / (
             1 - self.beta_1 ** (self.iterations + 1)
         )
-        if step == 0:
-            print("iterations", self.iterations)
         bias_momentums_corrected = layer.bias_momentums / (
             1 - self.beta_1 ** (self.iterations + 1)
         )

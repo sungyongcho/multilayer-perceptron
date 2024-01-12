@@ -384,7 +384,7 @@ class Optimizer_Adam:
             )
 
     # Update parameters
-    def update_params(self, layer, step):
+    def update_params(self, layer):
         # If layer does not contain cache arrays,
         # create them filled with zeros
         if not hasattr(layer, "weight_cache"):
@@ -406,8 +406,6 @@ class Optimizer_Adam:
         weight_momentums_corrected = layer.weight_momentums / (
             1 - self.beta_1 ** (self.iterations + 1)
         )
-        if step == 0:
-            print("iterations", self.iterations)
         bias_momentums_corrected = layer.bias_momentums / (
             1 - self.beta_1 ** (self.iterations + 1)
         )
@@ -885,23 +883,26 @@ class Model:
                 accuracy = self.accuracy.calculate(predictions, batch_y)
 
                 # Perform backward pass
-                self.backward(output, batch_y, step)
+                self.backward(output, batch_y)
 
                 # Optimize (update parameters)
                 self.optimizer.pre_update_params()
-                for layer in reversed(self.trainable_layers):
-                    self.optimizer.update_params(layer, step)
+                for layer in self.trainable_layers:
+                    self.optimizer.update_params(layer)
                 self.optimizer.post_update_params()
 
                 # Print a summary
-                if step == 0 or step == 1:
+                if not step % print_every or step == train_steps - 1:
+                    # print(
+                    #     f"step: {step}, "
+                    #     + f"acc: {accuracy:.3f}, "
+                    #     + f"loss: {loss:.3f} ("
+                    #     + f"data_loss: {data_loss:.3f}, "
+                    #     + f"reg_loss: {regularization_loss:.3f}), "
+                    #     + f"lr: {self.optimizer.current_learning_rate}"
+                    # )
                     print(
-                        f"step: {step}, "
-                        + f"acc: {accuracy}, "
-                        + f"loss: {loss} ("
-                        + f"data_loss: {data_loss:.3f}, "
-                        + f"reg_loss: {regularization_loss:.3f}), "
-                        + f"lr: {self.optimizer.current_learning_rate}"
+                        f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}, LR: {self.optimizer.current_learning_rate}"
                     )
 
             # Get and print epoch loss and accuracy
@@ -912,14 +913,16 @@ class Model:
             epoch_loss = epoch_data_loss + epoch_regularization_loss
             epoch_accuracy = self.accuracy.calculate_accumulated()
 
-            print(
-                f"training, "
-                + f"acc: {epoch_accuracy}, "
-                + f"loss: {epoch_loss} ("
-                + f"data_loss: {epoch_data_loss:.3f}, "
-                + f"reg_loss: {epoch_regularization_loss:.3f}), "
-                + f"lr: {self.optimizer.current_learning_rate}"
-            )
+            print(f"Training - Accuracy: {epoch_accuracy}, Loss: {epoch_loss}")
+
+            # print(
+            #     f"training, "
+            #     + f"acc: {epoch_accuracy}, "
+            #     + f"loss: {epoch_loss} ("
+            #     + f"data_loss: {epoch_data_loss:.3f}, "
+            #     + f"reg_loss: {epoch_regularization_loss:.3f}), "
+            #     + f"lr: {self.optimizer.current_learning_rate}"
+            # )
 
             # If there is the validation data
             if validation_data is not None:
@@ -979,7 +982,7 @@ class Model:
         return layer.output
 
     # Performs backward pass
-    def backward(self, output, y, step):
+    def backward(self, output, y):
         # If softmax classifier
         if self.softmax_classifier_output is not None:
             # First call backward method
@@ -996,12 +999,9 @@ class Model:
             # Call backward method going through
             # all the objects but last
             # in reversed order passing dinputs as a parameter
-            idx = len(self.layers[:-1])
             for layer in reversed(self.layers[:-1]):
                 layer.backward(layer.next.dinputs)
-                # if step == 0 and idx == 1:
-                #     print(layer.dinputs)
-                idx -= 1
+
             return
 
         # First call backward method on the loss
@@ -1087,7 +1087,7 @@ model.add(Activation_Softmax())
 # Set loss, optimizer and accuracy objects
 model.set(
     loss=Loss_CategoricalCrossentropy(),
-    optimizer=Optimizer_Adam(learning_rate=0.001),
+    optimizer=Optimizer_Adam(decay=1e-3),
     accuracy=Accuracy_Categorical(),
 )
 
@@ -1109,5 +1109,5 @@ for layer in model.layers:
 
 # Train the model
 model.train(
-    X, y, validation_data=(X_test, y_test), epochs=1, batch_size=128, print_every=100
+    X, y, validation_data=(X_test, y_test), epochs=10, batch_size=128, print_every=100
 )
