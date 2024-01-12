@@ -167,12 +167,20 @@ def normalization(data):
     return normalized_data, data_min, data_max
 
 
-def binary_crossentropy(y, y_pred, eps=1e-15):
-    y_pred = np.clip(y_pred, eps, 1 - eps)
-    loss = -np.mean(y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred))
-    return float(loss)
+def binary_crossentropy(y_true, y_pred, eps=1e-7):
+    y_pred_clipped = np.clip(y_pred, eps, 1 - eps)
+    sample_losses = -(
+        y_true * np.log(y_pred_clipped) + (1 - y_true) * np.log(1 - y_pred_clipped)
+    )
+
+    return sample_losses
 
 
-def binary_crossentropy_deriv(y, y_pred, eps=1e-15):
-    y_pred = np.clip(y_pred, eps, 1 - eps)
-    return -(y / y_pred - (1 - y) / (1 - y_pred))
+def binary_crossentropy_deriv(y_pred, y_true):
+    samples = len(y_pred)
+    outputs = len(y_pred[0])
+
+    clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+
+    output = -(y_true / clipped - (1 - y_true) / (1 - clipped)) / outputs
+    return output / samples

@@ -24,14 +24,14 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def binary_crossentropy_deriv(y_pred, y_true):
-    samples = len(y_pred)
-    outputs = len(y_pred[0])
+# def binary_crossentropy_deriv(y_pred, y_true):
+#     samples = len(y_pred)
+#     outputs = len(y_pred[0])
 
-    clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+#     clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
 
-    output = -(y_true / clipped - (1 - y_true) / (1 - clipped)) / outputs
-    return output / samples
+#     output = -(y_true / clipped - (1 - y_true) / (1 - clipped)) / outputs
+#     return output / samples
 
 
 def sigmoid_deriv(y_pred):
@@ -68,15 +68,11 @@ def categorical_crossentropy_deriv(y_pred, y_true):
 
 
 def crossentropy(y_true, y_pred):
-    # y_true = y_true.astype(int)
-
     samples = len(y_pred)
 
     # Clip data to prevent division by 0
     # Clip both sides to not drag mean towards any value
     y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
-
-    # print(samples, y_pred_clipped)
 
     # Probabilities for target values -
     # only if categorical labels
@@ -93,26 +89,12 @@ def crossentropy(y_true, y_pred):
     return negative_log_likelihoods
 
 
-def binary_crossentropy(y_true, y_pred):
-    y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
-
-    # Calculate sample-wise loss
-    sample_losses = -(
-        y_true * np.log(y_pred_clipped) + (1 - y_true) * np.log(1 - y_pred_clipped)
-    )
-
-    # Return losses
-    return sample_losses
-
-
 class NeuralNetwork:
     def __init__(self, layers=None):
         if layers != None:
             self.layers = Layers(layers)
             self.deltas = [None] * (len(self.layers) - 1)
-            self.lr = None
             self.optimizer = None
-            self.optimizer_class = None
         else:
             self.layers = layers
 
@@ -158,8 +140,9 @@ class NeuralNetwork:
         return self.layers
 
     def feedforward(self, x):
-        # self.layers[0].inputs = x
+        # for input layer
         self.layers[0].outputs = x
+
         for i in range(1, len(self.layers)):
             self.layers[i].inputs = (
                 np.dot(
@@ -179,8 +162,8 @@ class NeuralNetwork:
 
         return self.layers[-1].outputs
 
-    def predict(self, row):
-        return self.feedforward(row)
+    def predict(self, x):
+        return self.feedforward(x)
 
     def backpropagation(self, y_true, y_pred):
         # for first index output only
@@ -208,12 +191,10 @@ class NeuralNetwork:
 
             error = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
 
-        self.optimizer_class.pre_update_params()
+        self.optimizer.pre_update_params()
         for i in reversed(range(1, len(self.layers))):
-            self.optimizer_class.update_params(
-                self.layers[i], self.layers[i - 1].outputs.T
-            )
-        self.optimizer_class.post_update_params()
+            self.optimizer.update_params(self.layers[i], self.layers[i - 1].outputs.T)
+        self.optimizer.post_update_params()
 
     def plot_graphs(
         self,
@@ -256,7 +237,6 @@ class NeuralNetwork:
         predictions = (y_pred > 0.5) * 1
         return np.mean(predictions == y_true)
 
-    # TODO: remove
     def get_train_steps(self, batch_size, X_train, X_valid):
         train_steps = len(X_train) // batch_size if batch_size else 1
         if train_steps * batch_size < len(X_train):
@@ -271,18 +251,18 @@ class NeuralNetwork:
 
         for step in range(steps):
             batch_X, batch_y = self.get_batch(X, y, step, batch_size)
-            # print(batch_X.shape, batch_y.shape)
 
             y_pred = self.feedforward(batch_X)
-            batch_cross_entropy = crossentropy(batch_y, y_pred)
-            loss = np.mean(batch_cross_entropy)
 
-            total_loss += np.sum(batch_cross_entropy)
-            total_samples += len(batch_cross_entropy)
+            batch_crossentropy = crossentropy(batch_y, y_pred)
+            loss = np.mean(batch_crossentropy)
 
             batch_compare = self.accuracy(batch_y, y_pred)
             accuracy = np.mean(batch_compare)
+
+            total_loss += np.sum(batch_crossentropy)
             total_accuracy += np.sum(batch_compare)
+            total_samples += len(batch_crossentropy)
 
             if is_training:
                 self.backpropagation(batch_y, y_pred)
@@ -290,7 +270,7 @@ class NeuralNetwork:
             if is_training and (not step % 100 or step == steps - 1):
                 # pass
                 print(
-                    f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}, LR: {self.optimizer_class.current_learning_rate}"
+                    f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}, LR: {self.optimizer.current_learning_rate}"
                 )
 
         loss = total_loss / total_samples
@@ -317,6 +297,7 @@ class NeuralNetwork:
         epochs,
         optimizer,
         plot=False,
+        decay=0.0,
     ):
         # loading data
         # Load X_train from the CSV file
@@ -328,13 +309,11 @@ class NeuralNetwork:
         y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
 
         # set values
-        self.lr = learning_rate
         self.loss = loss
-        self.optimizer = optimizer
-        if self.optimizer == "sgd":
-            self.optimizer_class = Optimizer_SGD(learning_rate=self.lr)
-        elif self.optimizer == "adam":
-            self.optimizer_class = Optimizer_Adam(decay=1e-4)
+        if optimizer == "sgd":
+            self.optimizer = Optimizer_SGD(learning_rate=learning_rate, decay=decay)
+        elif optimizer == "adam":
+            self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
 
         if self.layers is None and layers is not None:
             self.__init__(layers)
