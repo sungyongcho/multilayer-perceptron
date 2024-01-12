@@ -5,6 +5,7 @@ from srcs.layers import Layers
 from srcs.optimizers.optimizer_sgd import Optimizer_SGD
 from srcs.optimizers.optimizer_adam import Optimizer_Adam
 from srcs.utils import (
+    crossentropy,
     binary_crossentropy,
     binary_crossentropy_deriv,
     accuracy,
@@ -18,34 +19,8 @@ import numpy as np
 # np.random.seed(42)
 
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
-
 def sigmoid_deriv(y_pred):
     return (1 - y_pred) * y_pred
-
-
-def heUniform(shape):
-    fan_in = shape[0]
-    limit = np.sqrt(6.0 / fan_in)
-    return np.random.uniform(low=-limit, high=limit, size=shape)
-
-
-def relu(x):
-    return np.maximum(0, x)
-
-
-def relu_derivative(y_pred, y_true):
-    y_pred[y_true <= 0] = 0
-    return y_pred
-
-
-def softmax(x):
-    exp_x = np.exp(
-        x - np.max(x, axis=1, keepdims=True)
-    )  # Subtracting the maximum for numerical stability
-    return exp_x / np.sum(exp_x, axis=1, keepdims=True)
 
 
 def categorical_crossentropy_deriv(y_pred, y_true):
@@ -53,41 +28,6 @@ def categorical_crossentropy_deriv(y_pred, y_true):
         y_true = np.argmax(y_true, axis=1)
     y_pred[range(len(y_pred)), y_true] -= 1
     return y_pred / len(y_pred)
-
-
-def accuracy(y_true, y_pred):
-    # NEED TO CHECK
-    predictions = np.argmax(y_pred, axis=1)
-    if len(y_true.shape) == 2:
-        y_true = np.argmax(y_true, axis=1)
-    return predictions == y_true
-
-
-def accuracy_binary(y_true, y_pred):
-    predictions = (y_pred > 0.5) * 1
-    return np.mean(predictions == y_true)
-
-
-def crossentropy(y_true, y_pred):
-    samples = len(y_pred)
-
-    # Clip data to prevent division by 0
-    # Clip both sides to not drag mean towards any value
-    y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
-
-    # Probabilities for target values -
-    # only if categorical labels
-    if len(y_true.shape) == 1:
-        correct_confidences = y_pred_clipped[range(samples), y_true]
-
-    # Mask values - only for one-hot encoded labels
-    elif len(y_true.shape) == 2:
-        correct_confidences = np.sum(y_pred_clipped * y_true, axis=1)
-
-    # Losses
-    negative_log_likelihoods = -np.log(correct_confidences)
-
-    return negative_log_likelihoods
 
 
 class NeuralNetwork:
@@ -105,7 +45,10 @@ class NeuralNetwork:
         # print(type(self.layers))
         return f"{self.layers}" if self.layers is not None else None
 
-    def _init_weights(self):
+    def _init_parameters(self):
+        # TODO: 1. check indexing // doesn't look right
+        #       2. use functions defined in denselayer class
+
         # for i in range(1, len(self.layers)):
         #     if self.layers[i].weights_initializer == "random":
         #         self.layers[i].weights = np.random.randn(
@@ -128,13 +71,8 @@ class NeuralNetwork:
         self.layers[3].weights = np.loadtxt(
             "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
         )
-
-    def _init_bias(self):
         for i in range(1, len(self.layers)):
-            # if self.layers[i].weights_initializer == "random":
-            #     self.layers[i].biases = np.random.rand(1, self.layers[i].shape)
-            # elif self.layers[i].weights_initializer == "zeros":
-            self.layers[i].biases = np.zeros((1, self.layers[i].shape))
+            self.layers[i].init_biases()
 
     def _assign_optimizer_class(self, optimizer, learning_rate, decay):
         if optimizer == "sgd":
@@ -142,7 +80,7 @@ class NeuralNetwork:
         elif optimizer == "adam":
             self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
 
-    def _set_crossentropy_name(self, loss):
+    def _set_loss_functions(self, loss):
         if loss != "binaryCrossentropy" and loss != "classCrossentropy":
             raise ValueError("loss not set correctly.")
         if loss == "classCrossentropy":
@@ -161,8 +99,7 @@ class NeuralNetwork:
 
     def createNetwork(self, layers) -> Layers:
         self.__init__(layers)
-        self._init_weights()
-        self._init_bias()
+        self._init_parameters()
         return self.layers
 
     def feedforward(self, x):
@@ -177,14 +114,7 @@ class NeuralNetwork:
                 )
                 + self.layers[i].biases
             )
-            if self.layers[i].activation == "sigmoid":
-                self.layers[i].outputs = sigmoid(self.layers[i].inputs)
-            elif self.layers[i].activation == "relu":
-                # print(self.layers[i + 1].inputs)
-                self.layers[i].outputs = relu(self.layers[i].inputs)
-                # print(self.outputs[i])
-            elif self.layers[i].activation == "softmax":
-                self.layers[i].outputs = softmax(self.layers[i].inputs)
+            self.layers[i].set_outputs(self.layers[i].inputs)
 
         return self.layers[-1].outputs
 
@@ -192,8 +122,8 @@ class NeuralNetwork:
         return self.feedforward(x)
 
     def backpropagation(self, y_true, y_pred):
-        # for first index output only
         # TODO: can make this cleaner
+        # for first index output only
         if self.loss == "classCrossentropy":
             self.layers[-1].deltas = categorical_crossentropy_deriv(y_pred, y_true)
         elif self.loss == "binaryCrossentropy":
@@ -202,11 +132,12 @@ class NeuralNetwork:
 
         error = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
 
+        # TODO: test derivative functions for relu, sigmoid, softmax and remove conditions
         # update activation gradients (delta)
         for i in reversed(range(1, len(self.layers) - 1)):
             # print(i)
             if self.layers[i].activation == "relu":
-                self.layers[i].deltas = relu_derivative(error, self.layers[i].inputs)
+                self.layers[i].set_activation_gradient(self.layers[i].inputs, error)
             elif self.layers[i].activation == "sigmoid":
                 pass
                 # self.deltas[i] = np.dot(
@@ -250,6 +181,7 @@ class NeuralNetwork:
         ax2.legend()
         plt.show()
 
+    # TODO: check and remove
     def mse_loss(self, y_true, y_pred):
         return np.mean((y_true - y_pred) ** 2)
 
@@ -271,13 +203,14 @@ class NeuralNetwork:
             y_pred = self.feedforward(batch_X)
 
             batch_crossentropy = self.crossentropy_function(batch_y, y_pred)
-            loss = np.mean(batch_crossentropy)
+            loss_step = np.mean(batch_crossentropy)
 
             batch_compare = self.accuracy_function(batch_y, y_pred)
-            accuracy = np.mean(batch_compare)
+            accuracy_step = np.mean(batch_compare)
 
             total_loss += np.sum(batch_crossentropy)
             total_accuracy += np.sum(batch_compare)
+
             total_samples += len(batch_crossentropy)
 
             if is_training:
@@ -286,7 +219,7 @@ class NeuralNetwork:
             if is_training and (not step % self.print_every or step == steps - 1):
                 # pass
                 print(
-                    f"Step: {step}, Accuracy: {accuracy}, Loss: {loss}, LR: {self.optimizer.current_learning_rate}"
+                    f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate}"
                 )
 
         loss = total_loss / total_samples
@@ -326,7 +259,7 @@ class NeuralNetwork:
         y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
 
         # set values
-        self._set_crossentropy_name(loss)
+        self._set_loss_functions(loss)
         self.print_every = print_every
         self._assign_optimizer_class(optimizer, learning_rate, decay)
 

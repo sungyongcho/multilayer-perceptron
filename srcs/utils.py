@@ -2,28 +2,28 @@ import math
 import numpy as np
 
 
-def sigmoid_(x):
-    """
-    Compute the sigmoid of a vector.
-    Args:
-    x: has to be a numpy.ndarray of shape (m, 1).
-    Returns:
-    The sigmoid value as a numpy.ndarray of shape (m, 1).
-    None if x is an empty numpy.ndarray.
-    Raises:
-    This function should not raise any Exception.
-    """
-    # Clip input values to avoid overflow
-    x = np.clip(x, -500, 500)
-    return 1 / (1 + math.e ** (-x))
+# def sigmoid_(x):
+#     """
+#     Compute the sigmoid of a vector.
+#     Args:
+#     x: has to be a numpy.ndarray of shape (m, 1).
+#     Returns:
+#     The sigmoid value as a numpy.ndarray of shape (m, 1).
+#     None if x is an empty numpy.ndarray.
+#     Raises:
+#     This function should not raise any Exception.
+#     """
+#     # Clip input values to avoid overflow
+#     x = np.clip(x, -500, 500)
+#     return 1 / (1 + math.e ** (-x))
 
 
-def softmax_(X):
-    X = np.array(X)
-    X = X - np.max(X, axis=1, keepdims=True)  # Normalize values
-    exp_x = np.exp(X)
-    result = exp_x / np.sum(exp_x, axis=1, keepdims=True)
-    return result
+# def softmax_(X):
+#     X = np.array(X)
+#     X = X - np.max(X, axis=1, keepdims=True)  # Normalize values
+#     exp_x = np.exp(X)
+#     result = exp_x / np.sum(exp_x, axis=1, keepdims=True)
+#     return result
 
 
 def heUniform_(num_input_nodes, num_output_nodes):
@@ -197,3 +197,51 @@ def accuracy(y_true, y_pred):
 def accuracy_binary(y_true, y_pred):
     predictions = (y_pred > 0.5) * 1
     return np.mean(predictions == y_true)
+
+
+def crossentropy(y_true, y_pred):
+    samples = len(y_pred)
+
+    # Clip data to prevent division by 0
+    # Clip both sides to not drag mean towards any value
+    y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+
+    # Probabilities for target values -
+    # only if categorical labels
+    if len(y_true.shape) == 1:
+        correct_confidences = y_pred_clipped[range(samples), y_true]
+
+    # Mask values - only for one-hot encoded labels
+    elif len(y_true.shape) == 2:
+        correct_confidences = np.sum(y_pred_clipped * y_true, axis=1)
+
+    # Losses
+    negative_log_likelihoods = -np.log(correct_confidences)
+
+    return negative_log_likelihoods
+
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
+def relu(x):
+    return np.maximum(0, x)
+
+
+def softmax(x):
+    exp_x = np.exp(
+        x - np.max(x, axis=1, keepdims=True)
+    )  # Subtracting the maximum for numerical stability
+    return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+
+
+def heUniform(shape):
+    fan_in = shape[0]
+    limit = np.sqrt(6.0 / fan_in)
+    return np.random.uniform(low=-limit, high=limit, size=shape)
+
+
+def relu_deriv(y_true, y_pred):
+    y_pred[y_true <= 0] = 0
+    return y_pred
