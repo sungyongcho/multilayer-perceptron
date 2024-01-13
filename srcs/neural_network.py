@@ -233,11 +233,11 @@ class NeuralNetwork:
             if is_training:
                 self.backpropagation(batch_y, y_pred)
 
-            if is_training and (not step % self.print_every or step == steps - 1):
-                # pass
-                print(
-                    f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate}"
-                )
+            # if is_training and (not step % self.print_every or step == steps - 1):
+            #     # pass
+            #     print(
+            #         f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate}"
+            #     )
 
         loss = total_loss / total_samples
         accuracy = total_accuracy / total_samples
@@ -309,7 +309,9 @@ class NeuralNetwork:
             )
             train_loss_history.append(train_loss)
             train_accuracy_history.append(train_accuracy)
-            print(f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}")
+            print(
+                f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}, lr: {self.optimizer.current_learning_rate}"
+            )
 
             if X_valid is not None and y_valid is not None:
                 valid_loss, valid_accuracy = self.process_data(

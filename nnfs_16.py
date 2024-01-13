@@ -573,7 +573,7 @@ X = np.loadtxt("./nnfs_data/X_train_16.csv", delimiter=",")
 y = np.loadtxt("./nnfs_data/y_train_16.csv", delimiter=",").reshape(-1, 1)
 
 # Create Dense layer with 2 input features and 64 output values
-dense1 = Layer_Dense(2, 64, weight_regularizer_l2=5e-4, bias_regularizer_l2=5e-4)
+dense1 = Layer_Dense(2, 64)
 
 # Create ReLU activation (to be used with Dense layer):
 activation1 = Activation_ReLU()
@@ -598,11 +598,11 @@ loss_function = Loss_BinaryCrossentropy()
 optimizer = Optimizer_Adam(decay=5e-7)
 
 # Train in loop
-for epoch in range(1):
+for epoch in range(5):
     # Perform a forward pass of our training data through this layer
     dense1.forward(X)
-    print(X)
-    print(dense1.output)
+    # print(X)
+    # print(dense1.output)
 
     # Perform a forward pass through activation function
     # takes the output of first dense layer here
@@ -620,12 +620,12 @@ for epoch in range(1):
     # Calculate the data loss
     data_loss = loss_function.calculate(activation2.output, y)
     # Calculate regularization penalty
-    regularization_loss = loss_function.regularization_loss(
-        dense1
-    ) + loss_function.regularization_loss(dense2)
+    # regularization_loss = loss_function.regularization_loss(
+    #     dense1
+    # ) + loss_function.regularization_loss(dense2)
 
     # Calculate overall loss
-    loss = data_loss + regularization_loss
+    loss = data_loss
 
     # Calculate accuracy from output of activation2 and targets
     # Part in the brackets returns a binary mask - array consisting
@@ -634,15 +634,14 @@ for epoch in range(1):
     predictions = (activation2.output > 0.5) * 1
     accuracy = np.mean(predictions == y)
 
-    if not epoch % 100:
-        print(
-            f"epoch: {epoch}, "
-            + f"acc: {accuracy:.3f}, "
-            + f"loss: {loss:.3f} ("
-            + f"data_loss: {data_loss:.3f}, "
-            + f"reg_loss: {regularization_loss:.3f}), "
-            + f"lr: {optimizer.current_learning_rate}"
-        )
+    print(
+        f"epoch: {epoch}, "
+        + f"acc: {accuracy}, "
+        + f"loss: {loss} ("
+        # + f"data_loss: {data_loss:.3f}, "
+        # + f"reg_loss: {regularization_loss:.3f}), "
+        + f"lr: {optimizer.current_learning_rate}"
+    )
 
     # Backward pass
     loss_function.backward(activation2.output, y)

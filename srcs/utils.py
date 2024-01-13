@@ -196,7 +196,7 @@ def accuracy(y_true, y_pred):
 
 def accuracy_binary(y_true, y_pred):
     predictions = (y_pred > 0.5) * 1
-    return np.mean(predictions == y_true)
+    return predictions == y_true
 
 
 def crossentropy(y_true, y_pred):
