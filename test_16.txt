@@ -4,4 +4,4 @@ network = model.createNetwork([
 	layers.DenseLayer(output_shape, activation='sigmoid', weights_initializer='random')
 ])
 
-model.fit(network, data_train, data_valid, loss='binaryCrossentropy', optimizer="adam", learning_rate=0.001, epochs=10000, plot=False, print_every=100, decay=5e-7)
+model.fit(network, data_train, data_valid, loss='binaryCrossentropy', optimizer="sgd", learning_rate=0.001, epochs=10000, plot=True, print_every=100, decay=5e-7)

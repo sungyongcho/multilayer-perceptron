@@ -84,6 +84,8 @@ class NeuralNetwork:
             self.layers[i].init_biases()
 
     def _assign_optimizer_class(self, optimizer, learning_rate, decay):
+        if optimizer != "sgd" and optimizer != "adam":
+            raise ValueError("optimizer not set correctly.")
         if optimizer == "sgd":
             self.optimizer = Optimizer_SGD(learning_rate=learning_rate, decay=decay)
         elif optimizer == "adam":
@@ -146,16 +148,13 @@ class NeuralNetwork:
         # update activation gradients (delta)
         for i in reversed(range(1, len(self.layers) - 1)):
             # print(i)
-            if self.layers[i].activation == "relu":
-                self.layers[i].set_activation_gradient(self.layers[i].inputs, error)
-            elif self.layers[i].activation == "sigmoid":
-                pass
-                # self.deltas[i] = np.dot(
-                #     self.deltas[i + 1], self.weights[i + 1].T
-                # ) * sigmoid_derivative(self.outputs[i])
-            elif self.layers[i].activation == "softmax":
-                pass
-                # self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
+            self.layers[i].set_activation_gradient(error)
+            # elif self.layers[i].activation == "sigmoid":
+            #     # print(error)
+            #     self.layers[i].set_activation_gradient(error)
+            # elif self.layers[i].activation == "softmax":
+            #     pass
+            #     # self.deltas[i] = softmax_derivative(di, self.layers[i + 1].inputs)
 
             error = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
 

@@ -1,5 +1,13 @@
 import numpy as np
-from srcs.utils import sigmoid, softmax, relu, relu_deriv, heUniform
+from srcs.utils import (
+    sigmoid,
+    sigmoid_deriv,
+    relu,
+    relu_deriv,
+    softmax,
+    softmax_deriv,
+    heUniform,
+)
 
 
 def softmax_derivative(softmax_output):
@@ -24,15 +32,18 @@ class DenseLayer:
 
         if self.activation == "sigmoid":
             self.activation_function = lambda x: sigmoid(x)
-            self.activation_deriv = lambda x: x * (1 - x)
+            self.activation_deriv = lambda gradient: sigmoid_deriv(
+                self.outputs, gradient
+            )
         elif self.activation == "softmax":
             self.activation_function = lambda x: softmax(x)
             # TODO
-            self.activation_deriv = lambda x: np.multiply(x, (1 - x))
+            self.activation_deriv = lambda gradient: softmax_deriv(
+                self.outputs, gradient
+            )
         elif self.activation == "relu":
             self.activation_function = lambda x: relu(x)
-            # TODO
-            self.activation_deriv = lambda y_true, y_pred: relu_deriv(y_true, y_pred)
+            self.activation_deriv = lambda gradient: relu_deriv(self.inputs, gradient)
 
     def __str__(self):
         return f'DenseLayer - Shape: {self.shape}, Activation: "{self.activation}", Weights Initializer: {self.weights_initializer}'
@@ -54,5 +65,5 @@ class DenseLayer:
     def set_outputs(self, x):
         self.outputs = self.activation_function(x)
 
-    def set_activation_gradient(self, y_true, y_pred):
-        self.deltas = self.activation_deriv(y_true, y_pred)
+    def set_activation_gradient(self, gradient):
+        self.deltas = self.activation_deriv(gradient)

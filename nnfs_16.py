@@ -154,7 +154,9 @@ class Activation_Sigmoid:
     # Backward pass
     def backward(self, dvalues):
         # Derivative - calculates from output of the sigmoid function
+        # print(self.output)
         self.dinputs = dvalues * (1 - self.output) * self.output
+        # print(self.dinputs)
 
 
 # SGD optimizer
@@ -576,7 +578,7 @@ y = np.loadtxt("./nnfs_data/y_train_16.csv", delimiter=",").reshape(-1, 1)
 dense1 = Layer_Dense(2, 64)
 
 # Create ReLU activation (to be used with Dense layer):
-activation1 = Activation_ReLU()
+activation1 = Activation_Sigmoid()
 
 # Create second Dense layer with 64 input features (as we take output
 # of previous layer here) and 1 output value
@@ -598,7 +600,7 @@ loss_function = Loss_BinaryCrossentropy()
 optimizer = Optimizer_Adam(decay=5e-7)
 
 # Train in loop
-for epoch in range(5):
+for epoch in range(1001):
     # Perform a forward pass of our training data through this layer
     dense1.forward(X)
     # print(X)

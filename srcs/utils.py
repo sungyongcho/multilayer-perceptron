@@ -242,6 +242,25 @@ def heUniform(shape):
     return np.random.uniform(low=-limit, high=limit, size=shape)
 
 
-def relu_deriv(y_true, y_pred):
-    y_pred[y_true <= 0] = 0
-    return y_pred
+def sigmoid_deriv(outputs, gradient):
+    return gradient * (1 - outputs) * outputs
+
+
+def relu_deriv(inputs, gradient):
+    gradient[inputs <= 0] = 0
+    return gradient
+
+
+def softmax_deriv(outputs, gradient):
+    deriv = np.empty_like(gradient)
+
+    for index, (single_output, single_dvalues) in enumerate(zip(outputs, gradient)):
+        single_output = single_output.reshape(-1, 1)
+        jacobian_matrix = np.diagflat(single_output) - np.dot(
+            single_output, single_output.T
+        )
+        # Calculate sample-wise gradient
+        # and add it to the array of sample gradients
+        deriv[index] = np.dot(jacobian_matrix, single_dvalues)
+
+    return deriv

@@ -1077,7 +1077,7 @@ model = Model()
 
 # Add layers
 model.add(Layer_Dense(X.shape[1], 64))
-model.add(Activation_ReLU())
+model.add(Activation_Sigmoid())
 model.add(Layer_Dense(64, 1))
 model.add(Activation_Softmax())
 
@@ -1107,4 +1107,4 @@ for layer in model.layers:
         i += 1
 
 # Train the model
-model.train(X, y, validation_data=(X_test, y_test), epochs=10, print_every=100)
+model.train(X, y, validation_data=(X_test, y_test), epochs=1000, print_every=100)
