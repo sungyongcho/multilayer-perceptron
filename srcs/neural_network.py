@@ -62,15 +62,24 @@ class NeuralNetwork:
         #         self.layers[i].weights = heUniform(
         #             (self.layers[i].shape, self.layers[i + 1].shape)
         #         )
+
+        # self.layers[1].weights = np.loadtxt(
+        #     "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
+        # )
+        # self.layers[2].weights = np.loadtxt(
+        #     "./nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
+        # )
+        # self.layers[3].weights = np.loadtxt(
+        #     "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
+        # )
+
         self.layers[1].weights = np.loadtxt(
-            "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
+            "./nnfs_data/weights1_16.csv", delimiter=",", dtype=np.float64
         )
+
         self.layers[2].weights = np.loadtxt(
-            "./nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
-        )
-        self.layers[3].weights = np.loadtxt(
-            "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
-        )
+            "./nnfs_data/weights2_16.csv", delimiter=",", dtype=np.float64
+        ).reshape(-1, 1)
         for i in range(1, len(self.layers)):
             self.layers[i].init_biases()
 
@@ -105,7 +114,6 @@ class NeuralNetwork:
     def feedforward(self, x):
         # for input layer
         self.layers[0].outputs = x
-
         for i in range(1, len(self.layers)):
             self.layers[i].inputs = (
                 np.dot(
@@ -114,6 +122,8 @@ class NeuralNetwork:
                 )
                 + self.layers[i].biases
             )
+            # if i == 1:
+            #     print(self.layers[i].inputs)
             self.layers[i].set_outputs(self.layers[i].inputs)
 
         return self.layers[-1].outputs
@@ -186,12 +196,19 @@ class NeuralNetwork:
         return np.mean((y_true - y_pred) ** 2)
 
     def get_train_steps(self, batch_size, X_train, X_valid):
-        train_steps = len(X_train) // batch_size if batch_size else 1
-        if train_steps * batch_size < len(X_train):
-            train_steps += 1
-        validation_steps = len(X_valid) // batch_size if batch_size else 1
-        if validation_steps * batch_size < len(X_valid):
-            validation_steps += 1
+        train_steps = 1
+        validation_steps = None
+        if X_valid is not None:
+            validation_steps = 1
+
+        if batch_size is not None:
+            train_steps = len(X_train) // batch_size if batch_size else 1
+            if train_steps * batch_size < len(X_train):
+                train_steps += 1
+            if X_valid is not None:
+                validation_steps = len(X_valid) // batch_size if batch_size else 1
+                if validation_steps * batch_size < len(X_valid):
+                    validation_steps += 1
         return train_steps, validation_steps
 
     def process_data(self, X, y, steps, batch_size, is_training=True):
@@ -250,13 +267,21 @@ class NeuralNetwork:
         print_every=1,
     ):
         # loading data
+        # # Load X_train from the CSV file
+        # X_train = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
+        # y_train = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
+
+        # data_valid = True
+        # X_valid = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
+        # y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
+
         # Load X_train from the CSV file
-        X_train = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
-        y_train = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
+        X_train = np.loadtxt("./nnfs_data/X_train_16.csv", delimiter=",")
+        y_train = np.loadtxt("./nnfs_data/y_train_16.csv", delimiter=",").reshape(-1, 1)
 
         data_valid = True
-        X_valid = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
-        y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
+        X_valid = np.loadtxt("./nnfs_data/X_test_16.csv", delimiter=",")
+        y_valid = np.loadtxt("./nnfs_data/y_test_16.csv", delimiter=",").reshape(-1, 1)
 
         # set values
         self._set_loss_functions(loss)

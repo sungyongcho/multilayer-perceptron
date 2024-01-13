@@ -598,9 +598,11 @@ loss_function = Loss_BinaryCrossentropy()
 optimizer = Optimizer_Adam(decay=5e-7)
 
 # Train in loop
-for epoch in range(10001):
+for epoch in range(1):
     # Perform a forward pass of our training data through this layer
     dense1.forward(X)
+    print(X)
+    print(dense1.output)
 
     # Perform a forward pass through activation function
     # takes the output of first dense layer here
