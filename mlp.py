@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+import numpy as np
 from srcs.layers import Layers
 from srcs.neural_network import NeuralNetwork
 
@@ -43,17 +44,30 @@ if __name__ == "__main__":
         # y = y_bool.astype(int).to_numpy().reshape(-1, 1)
         # data_valid = y
 
-        # data_train = pd.read_csv("data_train.csv", header=None, index_col=0)
-        # data_valid = pd.read_csv("data_train.csv", header=None, index_col=0)
+        data_train = pd.read_csv("data_train.csv", header=None, index_col=0)
 
-        data_train = None
-        data_valid = None
+        X_train = data_train.drop(data_train.columns[0], axis=1).to_numpy()
+        y_train = data_train[data_train.columns[0]] == "M"
+        # y = y_bool.astype(int).to_numpy().reshape(-1, 1)
+        # data_valid = y
+        data_valid = pd.read_csv("data_train.csv", header=None, index_col=0)
+
+        print(X_train.shape, y_train.shape)
+        # data_train = None
+        # data_valid = None
 
         model = NeuralNetwork()
         layers = Layers()
 
-        input_shape = 2
-        output_shape = 1
+        # # nnfs_16
+        # input_shape = 2
+        # output_shape = 1
+        # nnfs_19
+        # input_shape = 78
+        # output_shape = 10
+
+        input_shape = 30
+        output_shape = 2
         model, network = execute_code_from_file(args.source)
         # print(model.outputs[-1])
         # print("after", model.outputs)

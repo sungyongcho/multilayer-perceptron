@@ -16,6 +16,7 @@ class Optimizer_Adam(Optimizer):
     # Update parameters
     def update_params(self, layer, prev_layer_output):
         dweights = np.dot(prev_layer_output, layer.deltas)
+        # print(dweights)
         dbiases = np.sum(layer.deltas, axis=0, keepdims=True)
         # If layer does not contain cache arrays,
         # create them filled with zeros

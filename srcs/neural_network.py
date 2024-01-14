@@ -10,6 +10,8 @@ from srcs.utils import (
     binary_crossentropy_deriv,
     accuracy,
     accuracy_binary,
+    heUniform,
+    load_split_data,
 )
 
 import numpy as np
@@ -49,19 +51,20 @@ class NeuralNetwork:
         # TODO: 1. check indexing // doesn't look right
         #       2. use functions defined in denselayer class
 
-        # for i in range(1, len(self.layers)):
-        #     if self.layers[i].weights_initializer == "random":
-        #         self.layers[i].weights = np.random.randn(
-        #             self.layers[i].shape, self.layers[i + 1].shape
-        #         )
-        #     elif self.layers[i].weights_initializer == "zeros":
-        #         self.layers[i].weights = np.zeros(
-        #             (self.layers[i].shape, self.layers[i + 1].shape)
-        #         )
-        #     elif self.layers[i + 1].weights_initializer == "heUniform":
-        #         self.layers[i].weights = heUniform(
-        #             (self.layers[i].shape, self.layers[i + 1].shape)
-        #         )
+        for i in range(1, len(self.layers)):
+            # print(self.layers[i - 1].shape, self.layers[i].shape)
+            if self.layers[i].weights_initializer == "random":
+                self.layers[i].weights = np.random.randn(
+                    self.layers[i - 1].shape, self.layers[i].shape
+                )
+            elif self.layers[i].weights_initializer == "zeros":
+                self.layers[i].weights = np.zeros(
+                    (self.layers[i - 1].shape, self.layers[i].shape)
+                )
+            elif self.layers[i + 1].weights_initializer == "heUniform":
+                self.layers[i].weights = heUniform(
+                    (self.layers[i - 1].shape, self.layers[i].shape)
+                )
 
         # self.layers[1].weights = np.loadtxt(
         #     "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
@@ -73,14 +76,14 @@ class NeuralNetwork:
         #     "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
         # )
 
-        self.layers[1].weights = np.loadtxt(
-            "./nnfs_data/weights1_16.csv", delimiter=",", dtype=np.float64
-        )
+        # self.layers[1].weights = np.loadtxt(
+        #     "./nnfs_data/weights1_16.csv", delimiter=",", dtype=np.float64
+        # )
 
-        self.layers[2].weights = np.loadtxt(
-            "./nnfs_data/weights2_16.csv", delimiter=",", dtype=np.float64
-        ).reshape(-1, 1)
-        for i in range(1, len(self.layers)):
+        # self.layers[2].weights = np.loadtxt(
+        #     "./nnfs_data/weights2_16.csv", delimiter=",", dtype=np.float64
+        # ).reshape(-1, 1)
+        for i in range(len(self.layers)):
             self.layers[i].init_biases()
 
     def _assign_optimizer_class(self, optimizer, learning_rate, decay):
@@ -127,7 +130,7 @@ class NeuralNetwork:
             # if i == 1:
             #     print(self.layers[i].inputs)
             self.layers[i].set_outputs(self.layers[i].inputs)
-
+        # print(self.layers[-1].outputs)
         return self.layers[-1].outputs
 
     def predict(self, x):
@@ -138,16 +141,16 @@ class NeuralNetwork:
         # for first index output only
         if self.loss == "classCrossentropy":
             self.layers[-1].deltas = categorical_crossentropy_deriv(y_pred, y_true)
+            # print(self.layers[-1].deltas)
         elif self.loss == "binaryCrossentropy":
             output_gradient = binary_crossentropy_deriv(y_pred, y_true)
+            print(output_gradient)
             self.layers[-1].deltas = output_gradient * sigmoid_deriv(y_pred)
 
         error = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
-
         # TODO: test derivative functions for relu, sigmoid, softmax and remove conditions
         # update activation gradients (delta)
         for i in reversed(range(1, len(self.layers) - 1)):
-            # print(i)
             self.layers[i].set_activation_gradient(error)
             # elif self.layers[i].activation == "sigmoid":
             #     # print(error)
@@ -266,22 +269,31 @@ class NeuralNetwork:
         print_every=1,
     ):
         # loading data
-        # # Load X_train from the CSV file
+        # Load X_train from the CSV file
         # X_train = np.loadtxt("./nnfs_data/X_train_19.csv", delimiter=",")
         # y_train = np.loadtxt("./nnfs_data/y_train_19.csv", delimiter=",").astype(int)
 
         # data_valid = True
         # X_valid = np.loadtxt("./nnfs_data/X_test_19.csv", delimiter=",")
         # y_valid = np.loadtxt("./nnfs_data/y_test_19.csv", delimiter=",").astype(int)
+        # print(X_train.shape, y_train.shape, X_valid.shape, y_valid.shape)
 
-        # Load X_train from the CSV file
-        X_train = np.loadtxt("./nnfs_data/X_train_16.csv", delimiter=",")
-        y_train = np.loadtxt("./nnfs_data/y_train_16.csv", delimiter=",").reshape(-1, 1)
+        # # Load X_train from the CSV file
+        # X_train = np.loadtxt("./nnfs_data/X_train_16.csv", delimiter=",")
+        # y_train = np.loadtxt("./nnfs_data/y_train_16.csv", delimiter=",").reshape(-1, 1)
 
-        data_valid = True
-        X_valid = np.loadtxt("./nnfs_data/X_test_16.csv", delimiter=",")
-        y_valid = np.loadtxt("./nnfs_data/y_test_16.csv", delimiter=",").reshape(-1, 1)
+        # data_valid = True
+        # X_valid = np.loadtxt("./nnfs_data/X_test_16.csv", delimiter=",")
+        # y_valid = np.loadtxt("./nnfs_data/y_test_16.csv", delimiter=",").reshape(-1, 1)
+        # print(X_train.shape, y_train.shape, X_valid.shape, y_valid.shape)
+        # X_train = data_train.drop(data_train.columns[0], axis=1).to_numpy()
+        # y_train = data_train[data_train.columns[0]] == "M"
+        # y_train = y_train.astype(int).to_numpy().reshape(-1, 1)
+        X_train, y_train = load_split_data("data_train.csv")
+        X_valid = None
+        y_valid = None
 
+        # print(X_train.shape, y_train.shape)
         # set values
         self._set_loss_functions(loss)
         self.print_every = print_every

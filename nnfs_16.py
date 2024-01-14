@@ -1,5 +1,6 @@
 import numpy as np
 import nnfs
+import pandas as pd
 from nnfs.datasets import spiral_data
 
 # nnfs.init()
@@ -149,7 +150,7 @@ class Activation_Sigmoid:
         # Save input and calculate/save output
         # of the sigmoid function
         self.inputs = inputs
-        self.output = 1 / (1 + np.exp(-inputs))
+        self.output = 1 / (1 + np.exp(-np.clip(inputs, -500, 500)))
 
     # Backward pass
     def backward(self, dvalues):
@@ -571,21 +572,28 @@ class Loss_BinaryCrossentropy(Loss):
 # np.savetxt("./nnfs_data/X_train_16.csv", X, delimiter=",")
 # np.savetxt("./nnfs_data/y_train_16.csv", y, delimiter=",")
 
-X = np.loadtxt("./nnfs_data/X_train_16.csv", delimiter=",")
-y = np.loadtxt("./nnfs_data/y_train_16.csv", delimiter=",").reshape(-1, 1)
+# X = np.loadtxt("./nnfs_data/X_train_16.csv", delimiter=",")
+# y = np.loadtxt("./nnfs_data/y_train_16.csv", delimiter=",").reshape(-1, 1)
+# print(X.shape)
+
+data_train = pd.read_csv("data_train.csv", header=None, index_col=0)
+X = data_train.drop(data_train.columns[0], axis=1).to_numpy()
+y = data_train[data_train.columns[0]] == "M"
+y = y.astype(int).to_numpy().reshape(-1, 1)
+print(X.shape)
 
 # Create Dense layer with 2 input features and 64 output values
-dense1 = Layer_Dense(2, 64)
+dense1 = Layer_Dense(X.shape[1], 64)
 
 # Create ReLU activation (to be used with Dense layer):
-activation1 = Activation_Sigmoid()
+activation1 = Activation_ReLU()
 
 # Create second Dense layer with 64 input features (as we take output
 # of previous layer here) and 1 output value
 dense2 = Layer_Dense(64, 1)
 
-dense1.weights = np.loadtxt("./nnfs_data/weights1_16.csv", delimiter=",")
-dense2.weights = np.loadtxt("./nnfs_data/weights2_16.csv", delimiter=",").reshape(-1, 1)
+# dense1.weights = np.loadtxt("./nnfs_data/weights1_16.csv", delimiter=",")
+# dense2.weights = np.loadtxt("./nnfs_data/weights2_16.csv", delimiter=",").reshape(-1, 1)
 
 # np.savetxt("./nnfs_data/weights1_16.csv", dense1.weights, delimiter=",")
 # np.savetxt("./nnfs_data/weights2_16.csv", dense2.weights, delimiter=",")
@@ -600,7 +608,7 @@ loss_function = Loss_BinaryCrossentropy()
 optimizer = Optimizer_Adam(decay=5e-7)
 
 # Train in loop
-for epoch in range(1001):
+for epoch in range(10):
     # Perform a forward pass of our training data through this layer
     dense1.forward(X)
     # print(X)
@@ -672,33 +680,33 @@ for epoch in range(1001):
 # np.savetxt("./nnfs_data/X_test_16.csv", X_test, delimiter=",")
 # np.savetxt("./nnfs_data/y_test_16.csv", y_test, delimiter=",")
 
-X_test = np.loadtxt("./nnfs_data/X_test_16.csv", delimiter=",")
-y_test = np.loadtxt("./nnfs_data/y_test_16.csv", delimiter=",").reshape(-1, 1)
+# X_test = np.loadtxt("./nnfs_data/X_test_16.csv", delimiter=",")
+# y_test = np.loadtxt("./nnfs_data/y_test_16.csv", delimiter=",").reshape(-1, 1)
 
 
-# Perform a forward pass of our testing data through this layer
-dense1.forward(X_test)
+# # Perform a forward pass of our testing data through this layer
+# dense1.forward(X_test)
 
-# Perform a forward pass through activation function
-# takes the output of first dense layer here
-activation1.forward(dense1.output)
+# # Perform a forward pass through activation function
+# # takes the output of first dense layer here
+# activation1.forward(dense1.output)
 
-# Perform a forward pass through second Dense layer
-# takes outputs of activation function of first layer as inputs
-dense2.forward(activation1.output)
+# # Perform a forward pass through second Dense layer
+# # takes outputs of activation function of first layer as inputs
+# dense2.forward(activation1.output)
 
-# Perform a forward pass through activation function
-# takes the output of second dense layer here
-activation2.forward(dense2.output)
+# # Perform a forward pass through activation function
+# # takes the output of second dense layer here
+# activation2.forward(dense2.output)
 
-# Calculate the data loss
-loss = loss_function.calculate(activation2.output, y_test)
+# # Calculate the data loss
+# loss = loss_function.calculate(activation2.output, y_test)
 
-# Calculate accuracy from output of activation2 and targets
-# Part in the brackets returns a binary mask - array consisting of
-# True/False values, multiplying it by 1 changes it into array
-# of 1s and 0s
-predictions = (activation2.output > 0.5) * 1
-accuracy = np.mean(predictions == y_test)
+# # Calculate accuracy from output of activation2 and targets
+# # Part in the brackets returns a binary mask - array consisting of
+# # True/False values, multiplying it by 1 changes it into array
+# # of 1s and 0s
+# predictions = (activation2.output > 0.5) * 1
+# accuracy = np.mean(predictions == y_test)
 
-print(f"validation, acc: {accuracy:.3f}, loss: {loss:.3f}")
+# print(f"validation, acc: {accuracy:.3f}, loss: {loss:.3f}")

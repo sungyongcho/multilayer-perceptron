@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import pandas as pd
 
 
 # def sigmoid_(x):
@@ -264,3 +265,45 @@ def softmax_deriv(outputs, gradient):
         deriv[index] = np.dot(jacobian_matrix, single_dvalues)
 
     return deriv
+
+
+class StandardScaler:
+    def __init__(self):
+        self.mean = None
+        self.scale = None
+
+    def fit(self, X):
+        self.mean = np.mean(X, axis=0)
+        self.scale = np.std(X, axis=0)
+        return self
+
+    def transform(self, X):
+        if self.mean is None or self.scale is None:
+            raise ValueError("fit method must be called before transform")
+        return (X - self.mean) / self.scale
+
+    def fit_transform(self, X):
+        return self.fit(X).transform(X)
+
+
+def one_hot_encode_binary_labels(labels):
+    one_hot_encoded_labels = np.zeros((len(labels), 2))
+    for i, label in enumerate(labels):
+        one_hot_encoded_labels[i, int(label)] = 1
+
+    return one_hot_encoded_labels
+
+
+def load_split_data(filename):
+    df = pd.read_csv(filename, header=None)
+
+    df[1] = df[1].map({"M": 1, "B": 0})
+    y = df[1].values
+    x = df.drop([0, 1], axis=1).values
+
+    # Normalize the data
+    scaler = StandardScaler()
+    x = scaler.fit_transform(x)
+    y = one_hot_encode_binary_labels(y)
+
+    return x, y
