@@ -96,6 +96,7 @@ def one_hot_encode_binary_labels(labels):
 
 
 def main():
+    scaler_list = ["minmax", "std"]
     parser = argparse.ArgumentParser(description="Split and preprocess data.")
     parser.add_argument("input_file", help="Path to the input CSV file.")
     parser.add_argument(
@@ -117,8 +118,15 @@ def main():
         df.drop([0], axis=1, inplace=True)  # Drop columns 0 (patient index)
         df.columns = range(len(df.columns))
 
-        if args.scaler:
+        if args.scaler and args.scaler not in scaler_list:
+            raise ValueError("Invalid scaler selection.")
+
+        if args.scaler == "minmax":
             scaler = MinMaxScaler()
+        elif args.scaler == "std":
+            scaler = StandardScaler()
+
+        if args.scaler:
             df[1] = one_hot_encode_binary_labels(df[1])
             df[df.columns[1:]] = scaler.fit_transform(df[df.columns[1:]])
 

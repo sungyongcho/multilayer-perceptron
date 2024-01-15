@@ -272,18 +272,3 @@ def softmax_deriv(outputs, gradient):
         deriv[index] = np.dot(jacobian_matrix, single_dvalues)
 
     return deriv
-
-
-def load_split_data(filename):
-    df = pd.read_csv(filename, header=None)
-
-    df[1] = df[1].map({"M": 1, "B": 0})
-    y = df[1].values
-    x = df.drop([0, 1], axis=1).values
-
-    # Normalize the data
-    scaler = MinMaxScaler()
-    x = scaler.fit_transform(x)
-    y = one_hot_encode_binary_labels(y)
-
-    return x, y
