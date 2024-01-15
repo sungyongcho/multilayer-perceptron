@@ -1,7 +1,10 @@
+import argparse
 import random
 import csv
 import sys
 import os
+import numpy as np
+import pandas as pd
 
 
 def is_valid_csv(input_file):
@@ -19,64 +22,116 @@ def is_valid_csv(input_file):
         return False
 
 
-def csv_splitter(input_file, output_train_file, output_test_file, proportion):
-    """Splits a CSV file into a training and a test set based on the given proportion.
-    Args:
-    input_file: The path of the input CSV file.
-    output_train_file: The path of the output CSV file for the training set.
-    output_test_file: The path of the output CSV file for the test set.
-    proportion: The proportion of data to be assigned to the training set.
-    """
-    with open(input_file, "r") as csvfile:
-        reader = csv.reader(csvfile)
-        header = next(reader)  # Read the header
+def custom_train_test_split(df, split_proportion=0.8, shuffle=False, random_state=42):
+    # Shuffle the DataFrame
+    if shuffle == True:
+        df = df.sample(frac=1, random_state=random_state).reset_index(drop=True)
 
-        # Read the data and convert it to a list of rows
-        data = list(reader)
+    num_rows = len(df)
+    split_index = int(split_proportion * num_rows)
 
-    # Shuffle the data
-    random.shuffle(data)
+    data_train = df.iloc[:split_index, :]
+    data_test = df.iloc[split_index:, :]
 
-    # Calculate the split index
-    split_index = int(proportion * len(data))
+    return data_train, data_test
 
-    # Split the data into training and test sets
-    data_train = data[:split_index]
-    data_test = data[split_index:]
 
-    # Write the training data to the output_train_file
-    with open(output_train_file, "w", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(header)
-        writer.writerows(data_train)
+class StandardScaler:
+    def __init__(self):
+        self.mean = None
+        self.scale = None
 
-    # Write the test data to the output_test_file
-    with open(output_test_file, "w", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(header)
-        writer.writerows(data_test)
+    def fit(self, X):
+        self.mean = np.mean(X, axis=0)
+        self.scale = np.std(X, axis=0)
+        return self
+
+    def transform(self, X):
+        if self.mean is None or self.scale is None:
+            raise ValueError("fit method must be called before transform")
+        return (X - self.mean) / self.scale
+
+    def fit_transform(self, X):
+        return self.fit(X).transform(X)
+
+
+class MinMaxScaler:
+    def __init__(self, feature_range=(0, 1)):
+        self.feature_range = feature_range
+        self.min_val = None
+        self.max_val = None
+
+    def fit(self, X):
+        self.min_val = np.min(X, axis=0)
+        self.max_val = np.max(X, axis=0)
+        return self
+
+    def transform(self, X):
+        if self.min_val is None or self.max_val is None:
+            raise ValueError("fit method must be called before transform")
+
+        min_range, max_range = self.feature_range
+        scaled_X = min_range + (X - self.min_val) * (max_range - min_range) / (
+            self.max_val - self.min_val
+        )
+        return scaled_X
+
+    def fit_transform(self, X):
+        return self.fit(X).transform(X)
+
+
+# def one_hot_encode_binary_labels(labels):
+#     one_hot_encoded_labels = np.zeros((len(labels), 2))
+#     for i, label in enumerate(labels):
+#         one_hot_encoded_labels[i, int(label)] = 1
+
+#     return pd.DataFrame(one_hot_encoded_labels)
+
+
+def one_hot_encode_binary_labels(labels):
+    one_hot_encoded_labels = np.zeros((len(labels), 1))
+    one_hot_encoded_labels[:, 0] = labels.astype(int)
+
+    return pd.DataFrame(one_hot_encoded_labels, columns=["0"])
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Split and preprocess data.")
+    parser.add_argument("input_file", help="Path to the input CSV file.")
+    parser.add_argument(
+        "--split_proportion",
+        type=float,
+        default=0.8,
+        help="Split proportion for train-test split.",
+    )
+    parser.add_argument("--scaler", choices=["minmax", "std"], help="Scaler option.")
+    parser.add_argument("--shuffle", action="store_true", help="Shuffle the data.")
+
+    args = parser.parse_args()
+
+    if is_valid_csv(args.input_file):
+        df = pd.read_csv(args.input_file, header=None)
+
+        # pre-processing data by definition
+        df[1] = df[1].map({"M": 1, "B": 0})
+        df.drop([0], axis=1, inplace=True)  # Drop columns 0 (patient index)
+        df.columns = range(len(df.columns))
+
+        if args.scaler:
+            scaler = MinMaxScaler()
+            df[1] = one_hot_encode_binary_labels(df[1])
+            df[df.columns[1:]] = scaler.fit_transform(df[df.columns[1:]])
+
+        data_train, data_test = custom_train_test_split(
+            df, split_proportion=args.split_proportion, shuffle=args.shuffle
+        )
+        data_train.to_csv("data_train.csv", index=False, header=False)
+        data_test.to_csv("data_test.csv", index=False, header=False)
+
+    else:
+        print("Error: Invalid CSV file:", args.input_file)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    if not (2 <= len(sys.argv) and len(sys.argv) <= 3):
-        print("Usage: python data_split.py <input_file> <split_proportion>")
-        print("\tIf split_proportion is not given, it is set 0.8 by default.")
-        sys.exit(1)
-    else:
-        input_file = sys.argv[1]
-        if is_valid_csv(input_file):
-            # Get the base name of the input file (without the extension)
-            base_name = os.path.splitext(os.path.basename(input_file))[0]
-
-            # Set the output file names based on the base name of the input file
-            output_train_file = f"{base_name}_train.csv"
-            output_test_file = f"{base_name}_test.csv"
-            if len(sys.argv) == 2:
-                csv_splitter(input_file, output_train_file, output_test_file, 0.8)
-            else:
-                csv_splitter(
-                    input_file, output_train_file, output_test_file, float(sys.argv[2])
-                )
-        else:
-            print("Error: Invalid CSV file:", input_file)
-            sys.exit(1)
+    main()

@@ -274,58 +274,6 @@ def softmax_deriv(outputs, gradient):
     return deriv
 
 
-class StandardScaler:
-    def __init__(self):
-        self.mean = None
-        self.scale = None
-
-    def fit(self, X):
-        self.mean = np.mean(X, axis=0)
-        self.scale = np.std(X, axis=0)
-        return self
-
-    def transform(self, X):
-        if self.mean is None or self.scale is None:
-            raise ValueError("fit method must be called before transform")
-        return (X - self.mean) / self.scale
-
-    def fit_transform(self, X):
-        return self.fit(X).transform(X)
-
-
-class MinMaxScaler:
-    def __init__(self, feature_range=(0, 1)):
-        self.feature_range = feature_range
-        self.min_val = None
-        self.max_val = None
-
-    def fit(self, X):
-        self.min_val = np.min(X, axis=0)
-        self.max_val = np.max(X, axis=0)
-        return self
-
-    def transform(self, X):
-        if self.min_val is None or self.max_val is None:
-            raise ValueError("fit method must be called before transform")
-
-        min_range, max_range = self.feature_range
-        scaled_X = min_range + (X - self.min_val) * (max_range - min_range) / (
-            self.max_val - self.min_val
-        )
-        return scaled_X
-
-    def fit_transform(self, X):
-        return self.fit(X).transform(X)
-
-
-def one_hot_encode_binary_labels(labels):
-    one_hot_encoded_labels = np.zeros((len(labels), 2))
-    for i, label in enumerate(labels):
-        one_hot_encoded_labels[i, int(label)] = 1
-
-    return one_hot_encoded_labels
-
-
 def load_split_data(filename):
     df = pd.read_csv(filename, header=None)
 
