@@ -10,6 +10,7 @@ from srcs.utils import (
     binary_crossentropy_deriv,
     accuracy,
     accuracy_binary,
+    one_hot_encode_binary_labels,
     sigmoid_deriv,
 )
 
@@ -226,8 +227,12 @@ class NeuralNetwork:
         print_every=1,
     ):
         X_train, y_train = self.load_split_data(data_train)
+        if loss == "classCrossentropy":
+            y_train = one_hot_encode_binary_labels(y_train)
         if data_valid is not None:
             X_valid, y_valid = self.load_split_data(data_valid)
+            if loss == "classCrossentropy":
+                y_valid = one_hot_encode_binary_labels(y_valid)
         else:
             X_valid = None
             y_valid = None

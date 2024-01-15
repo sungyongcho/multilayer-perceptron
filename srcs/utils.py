@@ -272,3 +272,11 @@ def softmax_deriv(outputs, gradient):
         deriv[index] = np.dot(jacobian_matrix, single_dvalues)
 
     return deriv
+
+
+def one_hot_encode_binary_labels(labels):
+    one_hot_encoded_labels = np.zeros((len(labels), 2))
+    for i, label in enumerate(labels):
+        one_hot_encoded_labels[i, int(label)] = 1
+
+    return one_hot_encoded_labels
