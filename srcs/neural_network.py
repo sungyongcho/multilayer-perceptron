@@ -10,7 +10,6 @@ from srcs.utils import (
     binary_crossentropy_deriv,
     accuracy,
     accuracy_binary,
-    load_split_data,
     sigmoid_deriv,
 )
 
@@ -207,6 +206,11 @@ class NeuralNetwork:
             batch_y = y[step * batch_size : (step + 1) * batch_size]
             return batch_X, batch_y
 
+    def load_split_data(self, data):
+        X = data[:, 1:]
+        y = data[:, 0].astype(int).reshape(-1, 1)  # First column is y_train
+        return X, y
+
     def fit(
         self,
         layers,
@@ -221,9 +225,12 @@ class NeuralNetwork:
         decay=0.0,
         print_every=1,
     ):
-        X_train, y_train = load_split_data("data_train.csv")
-        X_valid = None
-        y_valid = None
+        X_train, y_train = self.load_split_data(data_train)
+        if data_valid is not None:
+            X_valid, y_valid = self.load_split_data(data_valid)
+        else:
+            X_valid = None
+            y_valid = None
 
         # print(X_train.shape, y_train.shape)
         # set values
