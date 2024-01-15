@@ -47,13 +47,6 @@ if __name__ == "__main__":
         model = NeuralNetwork()
         layers = Layers()
 
-        # # nnfs_16
-        # input_shape = 2
-        # output_shape = 1
-        # nnfs_19
-        # input_shape = 78
-        # output_shape = 10
-
         input_shape = 30
         output_shape = 1
         model, network = execute_code_from_file(args.source)
