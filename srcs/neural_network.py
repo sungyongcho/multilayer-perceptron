@@ -1,35 +1,21 @@
-import pandas as pd
-from srcs.dense_layer import DenseLayer
+import numpy as np
 from matplotlib import pyplot as plt
 from srcs.layers import Layers
 from srcs.optimizers.optimizer_sgd import Optimizer_SGD
 from srcs.optimizers.optimizer_adam import Optimizer_Adam
 from srcs.utils import (
-    crossentropy,
+    categorical_crossentropy,
+    categorical_crossentropy_deriv,
     binary_crossentropy,
     binary_crossentropy_deriv,
     accuracy,
     accuracy_binary,
-    heUniform,
     load_split_data,
+    sigmoid_deriv,
 )
 
-import numpy as np
-
-# nnfs.init(42)
 
 # np.random.seed(42)
-
-
-def sigmoid_deriv(y_pred):
-    return (1 - y_pred) * y_pred
-
-
-def categorical_crossentropy_deriv(y_pred, y_true):
-    if len(y_true.shape) == 2:
-        y_true = np.argmax(y_true, axis=1)
-    y_pred[range(len(y_pred)), y_true] -= 1
-    return y_pred / len(y_pred)
 
 
 class NeuralNetwork:
@@ -82,8 +68,8 @@ class NeuralNetwork:
         if loss != "binaryCrossentropy" and loss != "classCrossentropy":
             raise ValueError("loss not set correctly.")
         if loss == "classCrossentropy":
-            self.crossentropy_function = lambda y_true, y_pred: crossentropy(
-                y_true, y_pred
+            self.crossentropy_function = (
+                lambda y_true, y_pred: categorical_crossentropy(y_true, y_pred)
             )
             self.accuracy_function = lambda y_true, y_pred: accuracy(y_true, y_pred)
         elif loss == "binaryCrossentropy":
@@ -118,22 +104,20 @@ class NeuralNetwork:
         return self.feedforward(x)
 
     def backpropagation(self, y_true, y_pred):
-        # TODO: can make this cleaner
-        # for first index output only
+        # for output layer only
         if self.loss == "classCrossentropy":
             self.layers[-1].deltas = categorical_crossentropy_deriv(y_pred, y_true)
-            # print(self.layers[-1].deltas)
         elif self.loss == "binaryCrossentropy":
             output_gradient = binary_crossentropy_deriv(y_pred, y_true)
-            print(output_gradient)
-            self.layers[-1].deltas = output_gradient * sigmoid_deriv(y_pred)
-
+            self.layers[-1].deltas = sigmoid_deriv(y_pred, output_gradient)
         error = np.dot(self.layers[-1].deltas, self.layers[-1].weights.T)
+
         # update activation gradients (delta)
         for i in reversed(range(1, len(self.layers) - 1)):
             self.layers[i].set_activation_gradient(error)
             error = np.dot(self.layers[i].deltas, self.layers[i].weights.T)
 
+        # update weights
         self.optimizer.pre_update_params()
         for i in reversed(range(1, len(self.layers))):
             self.optimizer.update_params(self.layers[i], self.layers[i - 1].outputs.T)
@@ -165,10 +149,6 @@ class NeuralNetwork:
         ax2.grid(True)
         ax2.legend()
         plt.show()
-
-    # TODO: check and remove
-    def mse_loss(self, y_true, y_pred):
-        return np.mean((y_true - y_pred) ** 2)
 
     def get_train_steps(self, batch_size, X_train, X_valid):
         train_steps = 1
@@ -208,11 +188,11 @@ class NeuralNetwork:
             if is_training:
                 self.backpropagation(batch_y, y_pred)
 
-            # if is_training and (not step % self.print_every or step == steps - 1):
-            #     # pass
-            #     print(
-            #         f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate}"
-            #     )
+            if is_training and (not step % self.print_every or step == steps - 1):
+                # pass
+                print(
+                    f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate}"
+                )
 
         loss = total_loss / total_samples
         accuracy = total_accuracy / total_samples

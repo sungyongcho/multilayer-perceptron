@@ -46,7 +46,6 @@ class DenseLayer:
 
     def _validate_weights_initializer(self):
         valid_initializers = ["random", "zeros", "heUniform"]
-        print(self.weights_initializer)
         if self.weights_initializer not in valid_initializers:
             if self.weights_initializer is None:
                 # For input layer

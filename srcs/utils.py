@@ -200,7 +200,7 @@ def accuracy_binary(y_true, y_pred):
     return predictions == y_true
 
 
-def crossentropy(y_true, y_pred):
+def categorical_crossentropy(y_true, y_pred):
     samples = len(y_pred)
 
     # Clip data to prevent division by 0
@@ -220,6 +220,13 @@ def crossentropy(y_true, y_pred):
     negative_log_likelihoods = -np.log(correct_confidences)
 
     return negative_log_likelihoods
+
+
+def categorical_crossentropy_deriv(y_pred, y_true):
+    if len(y_true.shape) == 2:
+        y_true = np.argmax(y_true, axis=1)
+    y_pred[range(len(y_pred)), y_true] -= 1
+    return y_pred / len(y_pred)
 
 
 def sigmoid(x):
