@@ -15,13 +15,16 @@ from srcs.utils import (
 )
 
 
-# np.random.seed(42)
+np.random.seed(42)
 
 
 class NeuralNetwork:
     def __init__(self, layers=None):
         if layers != None:
-            self.layers = Layers(layers)
+            if isinstance(layers, Layers):
+                self.layers = layers
+            else:
+                self.layers = Layers(layers)
             self.deltas = [None] * (len(self.layers) - 1)
             self.optimizer = None
             self.crossentropy_function = None
@@ -38,25 +41,7 @@ class NeuralNetwork:
             self.layers[i].init_weights(self.layers[i - 1].shape)
             self.layers[i].init_biases()
 
-        # self.layers[1].weights = np.loadtxt(
-        #     "./nnfs_data/weights1_19.csv", delimiter=",", dtype=np.float64
-        # )
-        # self.layers[2].weights = np.loadtxt(
-        #     "./nnfs_data/weights2_19.csv", delimiter=",", dtype=np.float64
-        # )
-        # self.layers[3].weights = np.loadtxt(
-        #     "./nnfs_data/weights3_19.csv", delimiter=",", dtype=np.float64
-        # )
-
-        # self.layers[1].weights = np.loadtxt(
-        #     "./nnfs_data/weights1_16.csv", delimiter=",", dtype=np.float64
-        # )
-
-        # self.layers[2].weights = np.loadtxt(
-        #     "./nnfs_data/weights2_16.csv", delimiter=",", dtype=np.float64
-        # ).reshape(-1, 1)
-
-    def _assign_optimizer_class(self, optimizer, learning_rate, decay):
+    def _assign_optimizer_class(self, optimizer, learning_rate=0.01, decay=1e-7):
         if optimizer != "sgd" and optimizer != "adam":
             raise ValueError("optimizer not set correctly.")
         if optimizer == "sgd":
@@ -166,6 +151,13 @@ class NeuralNetwork:
                     validation_steps += 1
         return train_steps, validation_steps
 
+    def get_lost_and_accuracy(self, y_true, y_pred, mean=False):
+        loss = self.crossentropy_function(y_true, y_pred)
+        accuracy = self.accuracy_function(y_true, y_pred)
+        if mean == True:
+            return np.mean(loss), np.mean(accuracy)
+        return loss, accuracy
+
     def process_data(self, X, y, steps, batch_size, is_training=True):
         total_loss, total_accuracy, total_samples = 0, 0, 0
 
@@ -174,10 +166,10 @@ class NeuralNetwork:
 
             y_pred = self.feedforward(batch_X)
 
-            batch_crossentropy = self.crossentropy_function(batch_y, y_pred)
+            batch_crossentropy, batch_compare = self.get_lost_and_accuracy(
+                batch_y, y_pred
+            )
             loss_step = np.mean(batch_crossentropy)
-
-            batch_compare = self.accuracy_function(batch_y, y_pred)
             accuracy_step = np.mean(batch_compare)
 
             total_loss += np.sum(batch_crossentropy)

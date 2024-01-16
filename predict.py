@@ -6,14 +6,22 @@ from srcs.neural_network import NeuralNetwork
 network = Layers()
 network.load_network("network.json")
 
-
 model = NeuralNetwork(network)
+
+model._set_loss_functions("binaryCrossentropy")
+model._assign_optimizer_class("adam")
+
+data_train = np.genfromtxt("data_train.csv", delimiter=",")
+data_valid = np.genfromtxt("data_test.csv", delimiter=",")
+
+
+X_train, y_train = model.load_and_split_data(data_train)
+X_valid, y_valid = model.load_and_split_data(data_valid)
+
+y_pred = model.predict(X_valid)
+
+loss, accuracy = model.get_lost_and_accuracy(y_valid, y_pred, mean=True)
 
 
 print(model.layers)
-# data_train = np.genfromtxt("data_train.csv", delimiter=",")
-
-
-# X_train, y_train = model.load_and_split_data(data_train)
-
-# model.predict(X_train)
+print("loss:", loss, "accuracy:", accuracy)

@@ -34,16 +34,6 @@ if __name__ == "__main__":
         data_train = np.genfromtxt("data_train.csv", delimiter=",")
         data_valid = np.genfromtxt("data_test.csv", delimiter=",")
 
-        # X_train = data_train.drop(data_train.columns[0], axis=1).to_numpy()
-        # y_train = data_train[data_train.columns[0]] == "M"
-        # y = y_bool.astype(int).to_numpy().reshape(-1, 1)
-        # data_valid = y
-        # data_valid = pd.read_csv("data_train.csv", header=None, index_col=0)
-
-        # print(X_train.shape, y_train.shape)
-        # data_train = None
-        # data_valid = None
-
         model = NeuralNetwork()
         layers = Layers()
 
@@ -52,7 +42,6 @@ if __name__ == "__main__":
         model, network = execute_code_from_file(args.source)
         # print(model.outputs[-1])
         # print("after", model.outputs)
-        print(network)
         network.save_network("network")
         # network.save_layer_parameters("network")
 
