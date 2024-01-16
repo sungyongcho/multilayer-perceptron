@@ -10,14 +10,6 @@ from srcs.utils import (
 )
 
 
-def softmax_derivative(softmax_output):
-    # Calculate the softmax derivatives
-    s = softmax_output.reshape(-1, 1)
-    derivatives = np.diagflat(s) - np.dot(s, s.T)
-
-    return derivatives
-
-
 class DenseLayer:
     def __init__(self, shape, activation=None, weights_initializer=None):
         self.inputs = []
@@ -91,3 +83,35 @@ class DenseLayer:
 
     def set_activation_gradient(self, gradient):
         self.deltas = self.activation_deriv(gradient)
+
+    def layer_info_to_dict(self):
+        layer_info = {
+            "shape": self.shape,
+            "activation": self.activation,
+            "weights_initializer": self.weights_initializer,
+        }
+        return layer_info
+
+    def save_parameters(self, file_path):
+        parameters = {
+            "weights": self.weights,
+            "biases": self.biases,
+            "deltas": self.deltas,
+        }
+
+        np.savez(file_path, **parameters)
+
+    def load_parameters(self, file_path):
+        loaded_data = np.load(file_path, allow_pickle=True)
+
+        # Make sure the keys are present in the loaded data
+        if (
+            "weights" in loaded_data
+            and "biases" in loaded_data
+            and "deltas" in loaded_data
+        ):
+            self.weights = loaded_data["weights"]
+            self.biases = loaded_data["biases"]
+            self.deltas = loaded_data["deltas"]
+        else:
+            raise ValueError("Invalid file format or missing parameters.")

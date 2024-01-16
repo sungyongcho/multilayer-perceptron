@@ -52,14 +52,9 @@ if __name__ == "__main__":
         model, network = execute_code_from_file(args.source)
         # print(model.outputs[-1])
         # print("after", model.outputs)
+        print(network)
+        network.save_network("network")
+        # network.save_layer_parameters("network")
 
-        # print(model.predict(data_train))
-
-        # for i in range(len(model.outputs)):
-        #     print(model.outputs[i].shape)
-        # for i in range(len(model.weights)):
-        #     print(model.weights[i].shape)
-        # for i in range(len(model.biases)):
-        #     print(model.biases[i].shape)
     else:
         print("Please provide a file path using the --source flag.")

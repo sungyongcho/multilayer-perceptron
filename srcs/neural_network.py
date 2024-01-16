@@ -237,10 +237,10 @@ class NeuralNetwork:
         if self.layers is None and layers is not None:
             self.__init__(layers)
 
-        X_train, y_train = self.load_split_data(data_train)
+        X_train, y_train = self.load_and_split_data(data_train)
         X_valid, y_valid = None, None
         if data_valid is not None:
-            X_valid, y_valid = self.load_split_data(data_valid)
+            X_valid, y_valid = self.load_and_split_data(data_valid)
 
         (
             train_loss_history,
@@ -279,3 +279,6 @@ class NeuralNetwork:
                 train_accuracy_history,
                 valid_accuracy_history,
             )
+
+    def save_layers(self):
+        return self.layers
