@@ -2,7 +2,8 @@ network = model.createNetwork([
 	layers.DenseLayer(input_shape),
 	layers.DenseLayer(24, activation='relu', weights_initializer='heUniform'),
 	layers.DenseLayer(24, activation='relu', weights_initializer='heUniform'),
+	layers.DenseLayer(24, activation='relu', weights_initializer='heUniform'),
 	layers.DenseLayer(output_shape, activation='sigmoid', weights_initializer='heUniform')
 ])
 
-model.fit(network, data_train, data_valid, loss='binaryCrossentropy', optimizer="adam", learning_rate=0.01, epochs=10, batch_size=128,plot=False, print_every=100, decay=1e-4)
+model.fit(network, data_train, data_valid, loss='binaryCrossentropy', optimizer="adagrad", learning_rate=0.01, epochs=20, batch_size=84, plot=False, print_every=100, decay=5e-7)

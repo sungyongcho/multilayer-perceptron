@@ -46,7 +46,6 @@ class Layers:
             index: entry.layer_info_to_dict() for index, entry in enumerate(self.layers)
         }
         json_data = json.dumps(indexed_data, indent=2)
-        print(json_data)
 
         with open(filepath, "w") as file:
             file.write(json_data)

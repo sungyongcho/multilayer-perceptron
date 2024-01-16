@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 from srcs.layers import Layers
 from srcs.optimizers.optimizer_sgd import Optimizer_SGD
 from srcs.optimizers.optimizer_adam import Optimizer_Adam
+from srcs.optimizers.optimizer_adagrad import Optimizer_Adagrad
+from srcs.optimizers.optimizer_rmsprop import Optimizer_RMSProp
 from srcs.utils import (
     categorical_crossentropy,
     categorical_crossentropy_deriv,
@@ -42,12 +44,20 @@ class NeuralNetwork:
             self.layers[i].init_biases()
 
     def _assign_optimizer_class(self, optimizer, learning_rate=0.01, decay=1e-7):
-        if optimizer != "sgd" and optimizer != "adam":
-            raise ValueError("optimizer not set correctly.")
+        valid_optimizers = ["sgd", "adam", "adagrad", "rmsprop"]
+        if optimizer not in valid_optimizers:
+            raise ValueError(
+                "Invalid optimizer. Choose from: {}".format(valid_optimizers)
+            )
+
         if optimizer == "sgd":
             self.optimizer = Optimizer_SGD(learning_rate=learning_rate, decay=decay)
         elif optimizer == "adam":
             self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
+        elif optimizer == "adagrad":
+            self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
+        elif optimizer == "rmsprop":
+            self.optimizer = Optimizer_RMSProp(learning_rate=learning_rate, decay=decay)
 
     def _set_loss_functions(self, loss):
         if loss != "binaryCrossentropy" and loss != "classCrossentropy":
