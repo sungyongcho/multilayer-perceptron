@@ -61,8 +61,8 @@ def splitDataset(path, cut=0.2, label=False, shuffle=False):
         random.shuffle(content)
     filename = path[: path.rfind(".")]
     testset, trainingset = splitList(content, float(cut))
-    writeToCsv(filename + "_test_2.csv", testset, labels)
-    writeToCsv(filename + "_train_2.csv", trainingset, labels)
+    writeToCsv(filename + "_test.csv", testset, labels)
+    writeToCsv(filename + "_train.csv", trainingset, labels)
 
 
 if __name__ == "__main__":

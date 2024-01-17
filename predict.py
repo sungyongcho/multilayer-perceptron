@@ -11,7 +11,7 @@ model = NeuralNetwork(network)
 model._set_loss_functions("binaryCrossentropy")
 
 data_train = np.genfromtxt("data_train.csv", delimiter=",")
-data_valid = np.genfromtxt("data_test.csv", delimiter=",")
+data_valid = np.genfromtxt("data_valid.csv", delimiter=",")
 
 
 X_train, y_train = model.load_and_split_data(data_train)
@@ -23,4 +23,4 @@ loss, accuracy = model.get_lost_and_accuracy(y_valid, y_pred, mean=True)
 
 
 print(model.layers)
-print("loss:", loss, "accuracy:", accuracy)
+print(f"loss: {loss:.6f}", f"accuracy: {accuracy:.6f}")

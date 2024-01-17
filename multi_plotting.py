@@ -5,7 +5,7 @@ from srcs.neural_network import NeuralNetwork
 from srcs.utils import plot_graphs
 
 data_train = np.genfromtxt("data_train.csv", delimiter=",")
-data_valid = np.genfromtxt("data_test.csv", delimiter=",")
+data_valid = np.genfromtxt("data_valid.csv", delimiter=",")
 
 input_shape = 30
 output_shape = 1

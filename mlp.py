@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # Check if the --file argument is provided
     if args.source:
         data_train = np.genfromtxt("data_train.csv", delimiter=",")
-        data_valid = np.genfromtxt("data_test.csv", delimiter=",")
+        data_valid = np.genfromtxt("data_valid.csv", delimiter=",")
 
         model = NeuralNetwork()
         layers = Layers()
@@ -40,10 +40,7 @@ if __name__ == "__main__":
         input_shape = 30
         output_shape = 1
         model, network = execute_code_from_file(args.source)
-        # print(model.outputs[-1])
-        # print("after", model.outputs)
         network.save_network("network")
-        # network.save_layer_parameters("network")
 
     else:
         print("Please provide a file path using the --source flag.")

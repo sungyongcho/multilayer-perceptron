@@ -150,11 +150,11 @@ def main():
             data_test.to_csv("data_test.csv", index=False, header=False)
 
         else:
-            data_train, data_test = custom_train_test_split(
+            data_train, data_valid = custom_train_test_split(
                 df, split_proportion=args.split_proportion, shuffle=args.shuffle
             )
             data_train.to_csv("data_train.csv", index=False, header=False)
-            data_test.to_csv("data_test.csv", index=False, header=False)
+            data_valid.to_csv("data_valid.csv", index=False, header=False)
 
     else:
         print("Error: Invalid CSV file:", args.input_file)
