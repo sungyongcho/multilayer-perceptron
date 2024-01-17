@@ -176,7 +176,13 @@ class NeuralNetwork:
             if is_training and (not step % self.print_every or step == steps - 1):
                 # pass
                 print(
-                    f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate} precision: {batch_precision}, recall {batch_recall}, f1_score {batch_f1}"
+                    f"Step {step} - "
+                    + f"Accuracy: {accuracy_step:.6f} "
+                    + f"Loss: {loss_step:.6f} "
+                    + f"lr: {self.optimizer.current_learning_rate:.6f} "
+                    + f"precision: {batch_precision:.6f} "
+                    + f"recall {batch_recall:.6f} "
+                    + f"f1_score {batch_f1:.6f} "
                 )
         precision = true_positives / (true_positives + false_positives + 1e-8)
         recall = true_positives / (true_positives + false_negatives + 1e-8)
@@ -230,6 +236,8 @@ class NeuralNetwork:
         X_valid, y_valid = None, None
         if data_valid is not None:
             X_valid, y_valid = self.load_and_split_data(data_valid)
+        if data_test is not None:
+            X_test, y_test = self.load_and_split_data(data_valid)
 
         (
             train_loss_history,
@@ -246,7 +254,7 @@ class NeuralNetwork:
         best_valid_loss = float("inf")
 
         for epoch in range(epochs):
-            print(f"Epoch: {epoch + 1}")
+            print(f"Epoch {epoch + 1} / {epochs}")
             (
                 train_loss,
                 train_accuracy,
@@ -259,7 +267,13 @@ class NeuralNetwork:
             train_loss_history.append(train_loss)
             train_accuracy_history.append(train_accuracy)
             print(
-                f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}, lr: {self.optimizer.current_learning_rate}, precision {train_precison}, recall {train_recall}, f1: {train_f1}"
+                "Train - "
+                + f"Accuracy: {train_accuracy:.6f} "
+                + f"Loss: {train_loss:.6f} "
+                + f"lr: {self.optimizer.current_learning_rate:.6f} "
+                + f"precision {train_precison:.6f} "
+                + f"recall {train_recall:.6f} "
+                + f"f1: {train_f1:.6f} "
             )
 
             if X_valid is not None and y_valid is not None:
@@ -275,7 +289,12 @@ class NeuralNetwork:
                 valid_loss_history.append(valid_loss)
                 valid_accuracy_history.append(valid_accuracy)
                 print(
-                    f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}, precision {valid_precision}, recall {valid_recall}, f1: {valid_f1}"
+                    "Valid - "
+                    + f"Accuracy: {valid_accuracy:.6f} "
+                    + f"Loss: {valid_loss:.6f} "
+                    + f"precision {valid_precision:.6f} "
+                    + f"recall {valid_recall:.6f} "
+                    + f"f1: {valid_f1:.6f} "
                 )
                 if early_stopping_patience is not None:
                     if valid_loss < best_valid_loss:
