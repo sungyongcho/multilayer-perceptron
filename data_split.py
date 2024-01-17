@@ -36,6 +36,25 @@ def custom_train_test_split(df, split_proportion=0.8, shuffle=False, random_stat
     return data_train, data_test
 
 
+def custom_train_test_valid_split(
+    df, train_proportion=0.6, test_proportion=0.2, shuffle=False, random_state=42
+):
+    # Shuffle the DataFrame
+    if shuffle:
+        df = df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+
+    num_rows = len(df)
+
+    train_index = int(train_proportion * num_rows)
+    test_index = int((train_proportion + test_proportion) * num_rows)
+
+    data_train = df.iloc[:train_index, :]
+    data_test = df.iloc[train_index:test_index, :]
+    data_valid = df.iloc[test_index:, :]
+
+    return data_train, data_test, data_valid
+
+
 class StandardScaler:
     def __init__(self):
         self.mean = None
@@ -80,14 +99,6 @@ class MinMaxScaler:
         return self.fit(X).transform(X)
 
 
-# def one_hot_encode_binary_labels(labels):
-#     one_hot_encoded_labels = np.zeros((len(labels), 2))
-#     for i, label in enumerate(labels):
-#         one_hot_encoded_labels[i, int(label)] = 1
-
-#     return pd.DataFrame(one_hot_encoded_labels)
-
-
 def one_hot_encode_binary_labels(labels):
     one_hot_encoded_labels = np.zeros((len(labels), 1))
     one_hot_encoded_labels[:, 0] = labels.astype(int)
@@ -103,8 +114,9 @@ def main():
         "--split_proportion",
         type=float,
         default=0.8,
-        help="Split proportion for train-test split.",
+        help="Split proportion for train-test set.",
     )
+    parser.add_argument("--valid", action="store_true", help="make validation set.")
     parser.add_argument("--scaler", choices=["minmax", "std"], help="Scaler option.")
     parser.add_argument("--shuffle", action="store_true", help="Shuffle the data.")
 
@@ -129,12 +141,20 @@ def main():
         if args.scaler:
             df[1] = one_hot_encode_binary_labels(df[1])
             df[df.columns[1:]] = scaler.fit_transform(df[df.columns[1:]])
+        if args.valid == True:
+            data_train, data_valid, data_test = custom_train_test_valid_split(
+                df, shuffle=args.shuffle
+            )
+            data_train.to_csv("data_train.csv", index=False, header=False)
+            data_valid.to_csv("data_valid.csv", index=False, header=False)
+            data_test.to_csv("data_test.csv", index=False, header=False)
 
-        data_train, data_test = custom_train_test_split(
-            df, split_proportion=args.split_proportion, shuffle=args.shuffle
-        )
-        data_train.to_csv("data_train.csv", index=False, header=False)
-        data_test.to_csv("data_test.csv", index=False, header=False)
+        else:
+            data_train, data_test = custom_train_test_split(
+                df, split_proportion=args.split_proportion, shuffle=args.shuffle
+            )
+            data_train.to_csv("data_train.csv", index=False, header=False)
+            data_test.to_csv("data_test.csv", index=False, header=False)
 
     else:
         print("Error: Invalid CSV file:", args.input_file)

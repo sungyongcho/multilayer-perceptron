@@ -1,0 +1,32 @@
+{
+  "0": {
+    "shape": 30,
+    "activation": null,
+    "weights_initializer": null
+  },
+  "1": {
+    "shape": 20,
+    "activation": "relu",
+    "weights_initializer": "heUniform"
+  },
+  "2": {
+    "shape": 20,
+    "activation": "relu",
+    "weights_initializer": "heUniform"
+  },
+  "3": {
+    "shape": 10,
+    "activation": "relu",
+    "weights_initializer": "heUniform"
+  },
+  "4": {
+    "shape": 10,
+    "activation": "relu",
+    "weights_initializer": "heUniform"
+  },
+  "5": {
+    "shape": 1,
+    "activation": "sigmoid",
+    "weights_initializer": "heUniform"
+  }
+}

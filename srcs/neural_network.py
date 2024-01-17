@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import numpy as np
 from srcs.layers import Layers
 from srcs.optimizers.optimizer_sgd import Optimizer_SGD
@@ -207,12 +208,14 @@ class NeuralNetwork:
         data_valid,
         loss,
         optimizer,
+        data_test=None,
         learning_rate=0.01,
         batch_size=None,
         epochs=1,
         plot=False,
         decay=0.0,
         print_every=1,
+        early_stopping_patience=None,
     ):
         # print(X_train.shape, y_train.shape)
         # set values
@@ -238,6 +241,9 @@ class NeuralNetwork:
         train_steps, validation_steps = self.get_train_steps(
             batch_size, X_train, X_valid
         )
+
+        early_stopping_counter = 0
+        best_valid_loss = float("inf")
 
         for epoch in range(epochs):
             print(f"Epoch: {epoch + 1}")
@@ -271,6 +277,18 @@ class NeuralNetwork:
                 print(
                     f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}, precision {valid_precision}, recall {valid_recall}, f1: {valid_f1}"
                 )
+                if early_stopping_patience is not None:
+                    if valid_loss < best_valid_loss:
+                        best_valid_loss = valid_loss
+                        early_stopping_counter = 0
+                    else:
+                        early_stopping_counter += 1
+
+                    if early_stopping_counter >= early_stopping_patience:
+                        print(
+                            f"Early stopping at epoch {epoch + 1} due to no improvement in validation loss."
+                        )
+                        break
 
         if plot == True:
             plot_graphs(
