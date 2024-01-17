@@ -106,6 +106,39 @@ def one_hot_encode_binary_labels(labels):
     return pd.DataFrame(one_hot_encoded_labels, columns=["0"])
 
 
+def combine_and_split(input_train, input_valid, scaler):
+    # Load data
+    data_train = pd.read_csv(input_train, header=None)
+    data_valid = pd.read_csv(input_valid, header=None)
+
+    # Combine datasets
+    combined_data = pd.concat([data_train, data_valid], axis=0, ignore_index=True)
+
+    # pre-processing data by definition
+    combined_data[1] = combined_data[1].map({"M": 1, "B": 0})
+    combined_data.drop([0], axis=1, inplace=True)  # Drop columns 0 (patient index)
+    # Apply scaling
+    if scaler == "minmax":
+        scaler_obj = MinMaxScaler()
+    elif scaler == "std":
+        scaler_obj = StandardScaler()
+
+    combined_data[1] = combined_data[1].astype(int)
+    combined_data[combined_data.columns[1:]] = scaler_obj.fit_transform(
+        combined_data[combined_data.columns[1:]]
+    )
+
+    # Calculate split proportion based on the number of rows in data_train
+    num_rows_train = len(data_train)
+    split_index = num_rows_train / (num_rows_train + len(data_valid))
+
+    # Split back
+    data_train = combined_data.iloc[:num_rows_train, :]
+    data_valid = combined_data.iloc[num_rows_train:, :]
+
+    return data_train, data_valid
+
+
 def main():
     scaler_list = ["minmax", "std"]
     parser = argparse.ArgumentParser(description="Split and preprocess data.")
@@ -162,4 +195,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    data_train, data_valid = combine_and_split(
+        "data_train.csv", "data_test.csv", "minmax"
+    )
+    data_train.to_csv("data_train_2.csv", index=False, header=False)
+    data_valid.to_csv("data_valid_2.csv", index=False, header=False)

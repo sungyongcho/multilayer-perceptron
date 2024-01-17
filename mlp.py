@@ -31,8 +31,8 @@ if __name__ == "__main__":
 
     # Check if the --file argument is provided
     if args.source:
-        data_train = np.genfromtxt("data_train.csv", delimiter=",")
-        data_valid = np.genfromtxt("data_valid.csv", delimiter=",")
+        data_train = np.genfromtxt("data_train_2.csv", delimiter=",")
+        data_valid = np.genfromtxt("data_valid_2.csv", delimiter=",")
 
         model = NeuralNetwork()
         layers = Layers()
