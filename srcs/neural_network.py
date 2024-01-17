@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib import pyplot as plt
 from srcs.layers import Layers
 from srcs.optimizers.optimizer_sgd import Optimizer_SGD
 from srcs.optimizers.optimizer_adam import Optimizer_Adam
@@ -14,6 +13,7 @@ from srcs.utils import (
     accuracy,
     accuracy_binary,
     one_hot_encode_binary_labels,
+    plot_graphs,
     sigmoid_deriv,
 )
 
@@ -56,7 +56,7 @@ class NeuralNetwork:
         elif optimizer == "adam":
             self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
         elif optimizer == "adagrad":
-            self.optimizer = Optimizer_Adam(learning_rate=learning_rate, decay=decay)
+            self.optimizer = Optimizer_Adagrad(learning_rate=learning_rate, decay=decay)
         elif optimizer == "rmsprop":
             self.optimizer = Optimizer_RMSProp(learning_rate=learning_rate, decay=decay)
 
@@ -118,33 +118,6 @@ class NeuralNetwork:
         for i in reversed(range(1, len(self.layers))):
             self.optimizer.update_params(self.layers[i], self.layers[i - 1].outputs.T)
         self.optimizer.post_update_params()
-
-    def plot_graphs(
-        self,
-        train_loss_history,
-        valid_loss_history,
-        train_accuracy_history,
-        valid_accuracy_history,
-    ):
-        fig = plt.figure(figsize=(10, 5))
-        # Plot the loss history (first subplot)
-        ax1 = fig.add_subplot(1, 2, 1)  # 1 row, 2 columns, first plot
-        ax1.plot(train_loss_history, label="training loss")
-        ax1.plot(valid_loss_history, "--", label="valid loss")
-        ax1.set_xlabel("epoches")
-        ax1.set_ylabel("loss")
-        ax1.grid(True)
-        ax1.legend()
-
-        ax2 = fig.add_subplot(1, 2, 2)  # 1 row, 2 columns, second plot
-        ax2.plot(train_accuracy_history, label="training acc")
-        ax2.plot(valid_accuracy_history, "--", label="valid acc")
-        ax2.set_xlabel("Epoch")
-        ax2.set_ylabel("Accuracy")
-        ax2.set_title("Learning Curves")
-        ax2.grid(True)
-        ax2.legend()
-        plt.show()
 
     def get_train_steps(self, batch_size, X_train, X_valid):
         train_steps = 1
@@ -301,12 +274,24 @@ class NeuralNetwork:
                 )
 
         if plot == True:
-            self.plot_graphs(
-                train_loss_history,
-                valid_loss_history,
-                train_accuracy_history,
-                valid_accuracy_history,
+            plot_graphs(
+                [
+                    {
+                        "train_loss": train_loss_history,
+                        "valid_loss": valid_loss_history,
+                        "train_accuracy": train_accuracy_history,
+                        "valid_accuracy": valid_accuracy_history,
+                        "label": "Result",
+                    }
+                ]
             )
+            plt.show()
+        return {
+            "train_loss": train_loss_history,
+            "valid_loss": valid_loss_history,
+            "train_accuracy": train_accuracy_history,
+            "valid_accuracy": valid_accuracy_history,
+        }
 
     def save_layers(self):
         return self.layers

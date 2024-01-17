@@ -1,4 +1,5 @@
 import math
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -280,3 +281,46 @@ def one_hot_encode_binary_labels(labels):
         one_hot_encoded_labels[i, int(label)] = 1
 
     return one_hot_encoded_labels
+
+
+def plot_graphs(models_data):
+    num_models = len(models_data)
+    fig, axes = plt.subplots(num_models, 2, figsize=(12, 5 * num_models))
+
+    if num_models == 1:
+        axes = axes.reshape(1, -1)
+
+    for i, model_data in enumerate(models_data):
+        ax_loss = axes[i, 0]
+        ax_accuracy = axes[i, 1]
+
+        ax_loss.plot(
+            model_data["train_loss"], label=f"{model_data['label']} - training loss"
+        )
+        ax_loss.plot(
+            model_data["valid_loss"],
+            "--",
+            label=f"{model_data['label']} - valid loss",
+        )
+        ax_loss.set_xlabel("Epochs")
+        ax_loss.set_ylabel(":oss")
+        ax_accuracy.set_title(f"{model_data['label']} Training and Validation Loss")
+        ax_loss.grid(True)
+        ax_loss.legend()
+
+        ax_accuracy.plot(
+            model_data["train_accuracy"],
+            label=f"{model_data['label']} - training acc",
+        )
+        ax_accuracy.plot(
+            model_data["valid_accuracy"],
+            "--",
+            label=f"{model_data['label']} - valid acc",
+        )
+        ax_accuracy.set_xlabel("Epochs")
+        ax_accuracy.set_ylabel("Accuracy")
+        ax_accuracy.set_title(f"{model_data['label']} Learning Curves")
+        ax_accuracy.grid(True)
+        ax_accuracy.legend()
+
+    plt.show()
