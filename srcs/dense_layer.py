@@ -66,7 +66,7 @@ class DenseLayer:
     def init_weights(self, prev_layer_shape):
         shape_to_create = (prev_layer_shape, self.shape)
         if self.weights_initializer == "random":
-            self.weights = np.random.randn(prev_layer_shape, self.shape)
+            self.weights = 0.01 * np.random.randn(prev_layer_shape, self.shape)
         elif self.weights_initializer == "zeros":
             self.weights = np.zeros(shape_to_create)
         elif self.weights_initializer == "heUniform":

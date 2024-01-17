@@ -5,6 +5,7 @@ from srcs.optimizers.optimizer_sgd import Optimizer_SGD
 from srcs.optimizers.optimizer_adam import Optimizer_Adam
 from srcs.optimizers.optimizer_adagrad import Optimizer_Adagrad
 from srcs.optimizers.optimizer_rmsprop import Optimizer_RMSProp
+from srcs.optimizers.utils_metrics import f1_score, get_confusion_matrix
 from srcs.utils import (
     categorical_crossentropy,
     categorical_crossentropy_deriv,
@@ -170,7 +171,7 @@ class NeuralNetwork:
 
     def process_data(self, X, y, steps, batch_size, is_training=True):
         total_loss, total_accuracy, total_samples = 0, 0, 0
-
+        true_positives, false_positives, true_negatives, false_negatives = 0, 0, 0, 0
         for step in range(steps):
             batch_X, batch_y = self.get_batch(X, y, step, batch_size)
 
@@ -187,19 +188,30 @@ class NeuralNetwork:
 
             total_samples += len(batch_crossentropy)
 
+            tp, fp, tn, fn = get_confusion_matrix(batch_y, y_pred)
+            true_positives += tp
+            false_positives += fp
+            true_negatives += tn
+            false_negatives += fn
+            batch_precision = tp / (tp + fp + 1e-8)
+            batch_recall = tp / (tp + fn + 1e-8)
+            batch_f1 = f1_score(batch_precision, batch_recall)
+
             if is_training:
                 self.backpropagation(batch_y, y_pred)
 
             if is_training and (not step % self.print_every or step == steps - 1):
                 # pass
                 print(
-                    f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate}"
+                    f"Step: {step}, Accuracy: {accuracy_step}, Loss: {loss_step}, LR: {self.optimizer.current_learning_rate} precision: {batch_precision}, recall {batch_recall}, f1_score {batch_f1}"
                 )
-
+        precision = true_positives / (true_positives + false_positives + 1e-8)
+        recall = true_positives / (true_positives + false_negatives + 1e-8)
+        f1 = f1_score(precision, recall)
         loss = total_loss / total_samples
         accuracy = total_accuracy / total_samples
 
-        return loss, accuracy
+        return loss, accuracy, precision, recall, f1
 
     def get_batch(self, X, y, step, batch_size):
         if batch_size is None:
@@ -257,22 +269,36 @@ class NeuralNetwork:
 
         for epoch in range(epochs):
             print(f"Epoch: {epoch + 1}")
-            train_loss, train_accuracy = self.process_data(
+            (
+                train_loss,
+                train_accuracy,
+                train_precison,
+                train_recall,
+                train_f1,
+            ) = self.process_data(
                 X_train, y_train, train_steps, batch_size, is_training=True
             )
             train_loss_history.append(train_loss)
             train_accuracy_history.append(train_accuracy)
             print(
-                f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}, lr: {self.optimizer.current_learning_rate}"
+                f"Training - Accuracy: {train_accuracy}, Loss: {train_loss}, lr: {self.optimizer.current_learning_rate}, precision {train_precison}, recall {train_recall}, f1: {train_f1}"
             )
 
             if X_valid is not None and y_valid is not None:
-                valid_loss, valid_accuracy = self.process_data(
+                (
+                    valid_loss,
+                    valid_accuracy,
+                    valid_precision,
+                    valid_recall,
+                    valid_f1,
+                ) = self.process_data(
                     X_valid, y_valid, validation_steps, batch_size, is_training=False
                 )
                 valid_loss_history.append(valid_loss)
                 valid_accuracy_history.append(valid_accuracy)
-                print(f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}")
+                print(
+                    f"Validation - Accuracy: {valid_accuracy}, Loss: {valid_loss}, precision {valid_precision}, recall {valid_recall}, f1: {valid_f1}"
+                )
 
         if plot == True:
             self.plot_graphs(
