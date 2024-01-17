@@ -4,7 +4,7 @@ from srcs.optimizers.optimizer_sgd import Optimizer_SGD
 from srcs.optimizers.optimizer_adam import Optimizer_Adam
 from srcs.optimizers.optimizer_adagrad import Optimizer_Adagrad
 from srcs.optimizers.optimizer_rmsprop import Optimizer_RMSProp
-from srcs.optimizers.utils_metrics import f1_score, get_confusion_matrix
+from srcs.utils_metrics import f1_score, get_confusion_matrix
 from srcs.utils import (
     categorical_crossentropy,
     categorical_crossentropy_deriv,
@@ -16,7 +16,6 @@ from srcs.utils import (
     plot_graphs,
     sigmoid_deriv,
 )
-
 
 np.random.seed(42)
 
