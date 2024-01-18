@@ -195,9 +195,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    data_train, data_valid = combine_and_split(
-        "data_train.csv", "data_test.csv", "minmax"
-    )
-    data_train.to_csv("data_train_2.csv", index=False, header=False)
-    data_valid.to_csv("data_valid_2.csv", index=False, header=False)
+    main()
+    # data_train, data_valid = combine_and_split(
+    #     "data_train.csv", "data_test.csv", "minmax"
+    # )
+    # data_train.to_csv("data_train_2.csv", index=False, header=False)
+    # data_valid.to_csv("data_valid_2.csv", index=False, header=False)

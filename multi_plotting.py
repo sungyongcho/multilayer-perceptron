@@ -63,5 +63,31 @@ network2_history = model.fit(
 
 network2_history["label"] = "Network 2"
 
+network3 = model.createNetwork(
+    [
+        layers.DenseLayer(30),
+        layers.DenseLayer(24, activation="relu", weights_initializer="heUniform"),
+        layers.DenseLayer(24, activation="relu", weights_initializer="heUniform"),
+        layers.DenseLayer(24, activation="relu", weights_initializer="heUniform"),
+        layers.DenseLayer(2, activation="softmax", weights_initializer="heUniform"),
+    ]
+)
+
+network3_history = model.fit(
+    network3,
+    data_train,
+    data_valid,
+    loss="classCrossentropy",
+    optimizer="sgd",
+    learning_rate=0.01,
+    epochs=300,
+    batch_size=64,
+    plot=False,
+    print_every=100,
+    decay=5e-7,
+)
+
+network3_history["label"] = "Network 3"
+
 # print([model1_history])
-plot_graphs([network1_history, network2_history])
+plot_graphs([network1_history, network2_history, network3_history])
