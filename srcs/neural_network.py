@@ -135,7 +135,7 @@ class NeuralNetwork:
                     validation_steps += 1
         return train_steps, validation_steps
 
-    def get_lost_and_accuracy(self, y_true, y_pred, mean=False):
+    def get_loss_and_accuracy(self, y_true, y_pred, mean=False):
         loss = self.crossentropy_function(y_true, y_pred)
         accuracy = self.accuracy_function(y_true, y_pred)
         if mean == True:
@@ -150,7 +150,7 @@ class NeuralNetwork:
 
             y_pred = self.feedforward(batch_X)
 
-            batch_crossentropy, batch_compare = self.get_lost_and_accuracy(
+            batch_crossentropy, batch_compare = self.get_loss_and_accuracy(
                 batch_y, y_pred
             )
             loss_step = np.mean(batch_crossentropy)
@@ -258,7 +258,7 @@ class NeuralNetwork:
             (
                 train_loss,
                 train_accuracy,
-                train_precison,
+                train_precision,
                 train_recall,
                 train_f1,
             ) = self.process_data(
@@ -271,7 +271,7 @@ class NeuralNetwork:
                 + f"Accuracy: {train_accuracy:.6f} "
                 + f"Loss: {train_loss:.6f} "
                 + f"lr: {self.optimizer.current_learning_rate:.6f} "
-                + f"precision {train_precison:.6f} "
+                + f"precision {train_precision:.6f} "
                 + f"recall {train_recall:.6f} "
                 + f"f1: {train_f1:.6f} "
             )

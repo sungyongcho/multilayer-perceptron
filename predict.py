@@ -19,7 +19,7 @@ X_valid, y_valid = model.load_and_split_data(data_valid)
 
 y_pred = model.predict(X_valid)
 
-loss, accuracy = model.get_lost_and_accuracy(y_valid, y_pred, mean=True)
+loss, accuracy = model.get_loss_and_accuracy(y_valid, y_pred, mean=True)
 
 
 print(model.layers)
